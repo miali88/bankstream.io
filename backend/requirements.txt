@@ -8,3 +8,4 @@ python-jose[cryptography]==3.3.0
 python-multipart==0.0.6
 composio-core==0.6.0
 composio-openai==0.6.0
+pandasai==2.4.2
