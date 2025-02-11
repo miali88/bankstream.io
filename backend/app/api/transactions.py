@@ -14,7 +14,7 @@ supabase: Client = create_client(
     os.getenv("SUPABASE_KEY")
 )
 
-@router.post("/transactions")
+@router.post("/")
 async def create_transaction(
     transaction_data: dict,
     user_data: dict = Depends(verify_token)
@@ -26,8 +26,9 @@ async def create_transaction(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/transactions")
-async def get_transactions(user_data: dict = Depends(verify_token)):
+
+@router.get("/")
+async def get_transactions():
     try:
         result = supabase.table("transactions")\
             .select("*")\
@@ -37,7 +38,7 @@ async def get_transactions(user_data: dict = Depends(verify_token)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/transactions/{transaction_id}")
+@router.get("/{transaction_id}")
 async def get_transaction(
     transaction_id: str,
     user_data: dict = Depends(verify_token)
@@ -53,7 +54,7 @@ async def get_transaction(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.put("/transactions/{transaction_id}")
+@router.put("/{transaction_id}")
 async def update_transaction(
     transaction_id: str,
     transaction_data: dict,
@@ -69,7 +70,7 @@ async def update_transaction(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.delete("/transactions/{transaction_id}")
+@router.delete("/{transaction_id}")
 async def delete_transaction(
     transaction_id: str,
     user_data: dict = Depends(verify_token)
