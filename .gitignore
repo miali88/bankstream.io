@@ -36,5 +36,7 @@ Thumbs.db
 dist/
 build/
 *.egg-info/
+.next
+frontend/.next
 
 bank_data_23-25/
