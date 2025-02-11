@@ -1,0 +1,596 @@
+2025-02-10 23:36:12 [INFO] Question: Which are the top 5 countries by sales?
+2025-02-10 23:36:12 [INFO] Running PandaAI with bamboo_llm LLM...
+2025-02-10 23:36:12 [INFO] Prompt ID: 55202f5d-173f-40bf-9715-776b3ceac28e
+2025-02-10 23:36:12 [INFO] Generating new code...
+2025-02-10 23:36:12 [INFO] Using Prompt: <tables>
+
+<table table_name="table_3196ce98cf3ce3223735e1d61022e9d2" dimensions="10x2">
+country,revenue
+United States,5000
+United Kingdom,3200
+France,2900
+Germany,4100
+Italy,2300
+</table>
+
+
+</tables>
+
+You are already provided with the following functions that you can call:
+<function>
+def execute_sql_query(sql_query: str) -> pd.Dataframe
+    """This method connects to the database, executes the sql query and returns the dataframe"""
+</function>
+
+
+Update this initial code:
+```python
+# TODO: import the required dependencies
+import pandas as pd
+
+# Write code here
+
+# Declare result var: 
+type (possible values "string", "number", "dataframe", "plot"). Examples: { "type": "string", "value": f"The highest salary is {highest_salary}." } or { "type": "number", "value": 125 } or { "type": "dataframe", "value": pd.DataFrame({...}) } or { "type": "plot", "value": "temp_chart.png" }
+
+```
+
+
+
+### QUERY
+ Which are the top 5 countries by sales?
+
+At the end, declare "result" variable as a dictionary of type and value.
+
+
+Generate python code and return full updated code:
+
+### Note: Use only relevant table for query and do aggregation, sorting, joins and grouby through sql query
+2025-02-10 23:36:13 [INFO] An error occurred during code generation: Invalid API key
+2025-02-10 23:36:13 [INFO] Stack Trace:
+Traceback (most recent call last):
+  File "/Users/michaelali/Repos/bankstream.io/venv/lib/python3.11/site-packages/pandasai/core/code_generation/base.py", line 34, in generate_code
+    code = self._context.config.llm.generate_code(prompt, self._context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/michaelali/Repos/bankstream.io/venv/lib/python3.11/site-packages/pandasai/llm/base.py", line 172, in generate_code
+    response = self.call(instruction, context)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/michaelali/Repos/bankstream.io/venv/lib/python3.11/site-packages/pandasai/llm/bamboo_llm/base.py", line 21, in call
+    response = self._session.post(
+               ^^^^^^^^^^^^^^^^^^^
+  File "/Users/michaelali/Repos/bankstream.io/venv/lib/python3.11/site-packages/pandasai/helpers/session.py", line 47, in post
+    return self.make_request("POST", path, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/michaelali/Repos/bankstream.io/venv/lib/python3.11/site-packages/pandasai/helpers/session.py", line 98, in make_request
+    raise PandaAIApiCallError(data["detail"])
+pandasai.exceptions.PandaAIApiCallError: Invalid API key
+
+2025-02-10 23:37:29 [INFO] Question: Which are the top 5 countries by sales?
+2025-02-10 23:37:29 [INFO] Running PandaAI with bamboo_llm LLM...
+2025-02-10 23:37:29 [INFO] Prompt ID: b8fc8da4-5c83-4210-a30c-a6153c414e34
+2025-02-10 23:37:29 [INFO] Generating new code...
+2025-02-10 23:37:29 [INFO] Using Prompt: <tables>
+
+<table table_name="table_3196ce98cf3ce3223735e1d61022e9d2" dimensions="10x2">
+country,revenue
+United States,5000
+United Kingdom,3200
+France,2900
+Germany,4100
+Italy,2300
+</table>
+
+
+</tables>
+
+You are already provided with the following functions that you can call:
+<function>
+def execute_sql_query(sql_query: str) -> pd.Dataframe
+    """This method connects to the database, executes the sql query and returns the dataframe"""
+</function>
+
+
+Update this initial code:
+```python
+# TODO: import the required dependencies
+import pandas as pd
+
+# Write code here
+
+# Declare result var: 
+type (possible values "string", "number", "dataframe", "plot"). Examples: { "type": "string", "value": f"The highest salary is {highest_salary}." } or { "type": "number", "value": 125 } or { "type": "dataframe", "value": pd.DataFrame({...}) } or { "type": "plot", "value": "temp_chart.png" }
+
+```
+
+
+
+### QUERY
+ Which are the top 5 countries by sales?
+
+At the end, declare "result" variable as a dictionary of type and value.
+
+
+Generate python code and return full updated code:
+
+### Note: Use only relevant table for query and do aggregation, sorting, joins and grouby through sql query
+2025-02-10 23:37:29 [INFO] An error occurred during code generation: Invalid API key
+2025-02-10 23:37:29 [INFO] Stack Trace:
+Traceback (most recent call last):
+  File "/Users/michaelali/Repos/bankstream.io/venv/lib/python3.11/site-packages/pandasai/core/code_generation/base.py", line 34, in generate_code
+    code = self._context.config.llm.generate_code(prompt, self._context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/michaelali/Repos/bankstream.io/venv/lib/python3.11/site-packages/pandasai/llm/base.py", line 172, in generate_code
+    response = self.call(instruction, context)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/michaelali/Repos/bankstream.io/venv/lib/python3.11/site-packages/pandasai/llm/bamboo_llm/base.py", line 21, in call
+    response = self._session.post(
+               ^^^^^^^^^^^^^^^^^^^
+  File "/Users/michaelali/Repos/bankstream.io/venv/lib/python3.11/site-packages/pandasai/helpers/session.py", line 47, in post
+    return self.make_request("POST", path, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/michaelali/Repos/bankstream.io/venv/lib/python3.11/site-packages/pandasai/helpers/session.py", line 98, in make_request
+    raise PandaAIApiCallError(data["detail"])
+pandasai.exceptions.PandaAIApiCallError: Invalid API key
+
+2025-02-10 23:37:45 [INFO] Question: Which are the top 5 countries by sales?
+2025-02-10 23:37:45 [INFO] Running PandaAI with bamboo_llm LLM...
+2025-02-10 23:37:45 [INFO] Prompt ID: 2e09e4f4-9b7d-4ea2-ba81-eada2c0eda6c
+2025-02-10 23:37:45 [INFO] Generating new code...
+2025-02-10 23:37:45 [INFO] Using Prompt: <tables>
+
+<table table_name="table_3196ce98cf3ce3223735e1d61022e9d2" dimensions="10x2">
+country,revenue
+United States,5000
+United Kingdom,3200
+France,2900
+Germany,4100
+Italy,2300
+</table>
+
+
+</tables>
+
+You are already provided with the following functions that you can call:
+<function>
+def execute_sql_query(sql_query: str) -> pd.Dataframe
+    """This method connects to the database, executes the sql query and returns the dataframe"""
+</function>
+
+
+Update this initial code:
+```python
+# TODO: import the required dependencies
+import pandas as pd
+
+# Write code here
+
+# Declare result var: 
+type (possible values "string", "number", "dataframe", "plot"). Examples: { "type": "string", "value": f"The highest salary is {highest_salary}." } or { "type": "number", "value": 125 } or { "type": "dataframe", "value": pd.DataFrame({...}) } or { "type": "plot", "value": "temp_chart.png" }
+
+```
+
+
+
+### QUERY
+ Which are the top 5 countries by sales?
+
+At the end, declare "result" variable as a dictionary of type and value.
+
+
+Generate python code and return full updated code:
+
+### Note: Use only relevant table for query and do aggregation, sorting, joins and grouby through sql query
+2025-02-10 23:37:45 [INFO] An error occurred during code generation: Invalid API key
+2025-02-10 23:37:45 [INFO] Stack Trace:
+Traceback (most recent call last):
+  File "/Users/michaelali/Repos/bankstream.io/venv/lib/python3.11/site-packages/pandasai/core/code_generation/base.py", line 34, in generate_code
+    code = self._context.config.llm.generate_code(prompt, self._context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/michaelali/Repos/bankstream.io/venv/lib/python3.11/site-packages/pandasai/llm/base.py", line 172, in generate_code
+    response = self.call(instruction, context)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/michaelali/Repos/bankstream.io/venv/lib/python3.11/site-packages/pandasai/llm/bamboo_llm/base.py", line 21, in call
+    response = self._session.post(
+               ^^^^^^^^^^^^^^^^^^^
+  File "/Users/michaelali/Repos/bankstream.io/venv/lib/python3.11/site-packages/pandasai/helpers/session.py", line 47, in post
+    return self.make_request("POST", path, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/michaelali/Repos/bankstream.io/venv/lib/python3.11/site-packages/pandasai/helpers/session.py", line 98, in make_request
+    raise PandaAIApiCallError(data["detail"])
+pandasai.exceptions.PandaAIApiCallError: Invalid API key
+
+2025-02-10 23:40:16 [INFO] Question: Which are the top 5 countries by sales?
+2025-02-10 23:40:16 [INFO] Running PandaAI with bamboo_llm LLM...
+2025-02-10 23:40:16 [INFO] Prompt ID: fbb33352-b57e-4aeb-9cef-23bcfdb56ff4
+2025-02-10 23:40:16 [INFO] Generating new code...
+2025-02-10 23:40:16 [INFO] Using Prompt: <tables>
+
+<table table_name="table_3196ce98cf3ce3223735e1d61022e9d2" dimensions="10x2">
+country,revenue
+United States,5000
+United Kingdom,3200
+France,2900
+Germany,4100
+Italy,2300
+</table>
+
+
+</tables>
+
+You are already provided with the following functions that you can call:
+<function>
+def execute_sql_query(sql_query: str) -> pd.Dataframe
+    """This method connects to the database, executes the sql query and returns the dataframe"""
+</function>
+
+
+Update this initial code:
+```python
+# TODO: import the required dependencies
+import pandas as pd
+
+# Write code here
+
+# Declare result var: 
+type (possible values "string", "number", "dataframe", "plot"). Examples: { "type": "string", "value": f"The highest salary is {highest_salary}." } or { "type": "number", "value": 125 } or { "type": "dataframe", "value": pd.DataFrame({...}) } or { "type": "plot", "value": "temp_chart.png" }
+
+```
+
+
+
+### QUERY
+ Which are the top 5 countries by sales?
+
+At the end, declare "result" variable as a dictionary of type and value.
+
+
+Generate python code and return full updated code:
+
+### Note: Use only relevant table for query and do aggregation, sorting, joins and grouby through sql query
+2025-02-10 23:40:16 [INFO] An error occurred during code generation: Invalid API key
+2025-02-10 23:40:16 [INFO] Stack Trace:
+Traceback (most recent call last):
+  File "/Users/michaelali/Repos/bankstream.io/venv/lib/python3.11/site-packages/pandasai/core/code_generation/base.py", line 34, in generate_code
+    code = self._context.config.llm.generate_code(prompt, self._context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/michaelali/Repos/bankstream.io/venv/lib/python3.11/site-packages/pandasai/llm/base.py", line 172, in generate_code
+    response = self.call(instruction, context)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/michaelali/Repos/bankstream.io/venv/lib/python3.11/site-packages/pandasai/llm/bamboo_llm/base.py", line 21, in call
+    response = self._session.post(
+               ^^^^^^^^^^^^^^^^^^^
+  File "/Users/michaelali/Repos/bankstream.io/venv/lib/python3.11/site-packages/pandasai/helpers/session.py", line 47, in post
+    return self.make_request("POST", path, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/michaelali/Repos/bankstream.io/venv/lib/python3.11/site-packages/pandasai/helpers/session.py", line 98, in make_request
+    raise PandaAIApiCallError(data["detail"])
+pandasai.exceptions.PandaAIApiCallError: Invalid API key
+
+2025-02-10 23:40:22 [INFO] Question: Which are the top 5 countries by sales?
+2025-02-10 23:40:23 [INFO] Running PandaAI with bamboo_llm LLM...
+2025-02-10 23:40:23 [INFO] Prompt ID: 3016f21d-6e43-4fe4-9ff7-e4ee5d36cabf
+2025-02-10 23:40:23 [INFO] Generating new code...
+2025-02-10 23:40:23 [INFO] Using Prompt: <tables>
+
+<table table_name="table_3196ce98cf3ce3223735e1d61022e9d2" dimensions="10x2">
+country,revenue
+United States,5000
+United Kingdom,3200
+France,2900
+Germany,4100
+Italy,2300
+</table>
+
+
+</tables>
+
+You are already provided with the following functions that you can call:
+<function>
+def execute_sql_query(sql_query: str) -> pd.Dataframe
+    """This method connects to the database, executes the sql query and returns the dataframe"""
+</function>
+
+
+Update this initial code:
+```python
+# TODO: import the required dependencies
+import pandas as pd
+
+# Write code here
+
+# Declare result var: 
+type (possible values "string", "number", "dataframe", "plot"). Examples: { "type": "string", "value": f"The highest salary is {highest_salary}." } or { "type": "number", "value": 125 } or { "type": "dataframe", "value": pd.DataFrame({...}) } or { "type": "plot", "value": "temp_chart.png" }
+
+```
+
+
+
+### QUERY
+ Which are the top 5 countries by sales?
+
+At the end, declare "result" variable as a dictionary of type and value.
+
+
+Generate python code and return full updated code:
+
+### Note: Use only relevant table for query and do aggregation, sorting, joins and grouby through sql query
+2025-02-10 23:40:36 [INFO] Code Generated:
+# import the required dependencies
+import pandas as pd
+
+# function to execute sql query and return dataframe
+def execute_sql_query(sql_query: str) -> pd.DataFrame:
+    """This method connects to the database, executes the sql query and returns the dataframe"""
+
+# sql query to get top 5 countries by sales
+sql_query = "SELECT country, revenue FROM table_3196ce98cf3ce3223735e1d61022e9d2 ORDER BY revenue DESC LIMIT 5"
+
+# execute sql query and get result dataframe
+result_df = execute_sql_query(sql_query)
+
+# Declare result var: 
+result = { "type": "dataframe", "value": result_df }
+2025-02-10 23:40:36 [INFO] Validating code requirements...
+2025-02-10 23:40:36 [INFO] Code validation successful.
+2025-02-10 23:40:36 [INFO] Cleaning the generated code...
+2025-02-10 23:40:36 [INFO] Executing code: import pandas as pd
+sql_query = 'SELECT country, revenue FROM table_3196ce98cf3ce3223735e1d61022e9d2 ORDER BY revenue DESC LIMIT 5'
+result_df = execute_sql_query(sql_query)
+result = {'type': 'dataframe', 'value': result_df}
+2025-02-10 23:40:38 [INFO] Failed to extract font properties from /System/Library/Fonts/LastResort.otf: tuple indices must be integers or slices, not str
+2025-02-10 23:40:38 [INFO] Failed to extract font properties from /System/Library/Fonts/Apple Color Emoji.ttc: In FT2Font: Could not set the fontsize (invalid pixel size; error code 0x17)
+2025-02-10 23:40:38 [INFO] Failed to extract font properties from /System/Library/Fonts/Supplemental/NISC18030.ttf: In FT2Font: Could not set the fontsize (invalid pixel size; error code 0x17)
+2025-02-10 23:40:38 [INFO] generated new fontManager
+2025-02-10 23:40:38 [INFO] Response generated successfully.
+2025-02-10 23:42:23 [INFO] Question: Which are the top 5 countries by sales?
+2025-02-10 23:42:23 [INFO] Running PandaAI with bamboo_llm LLM...
+2025-02-10 23:42:23 [INFO] Prompt ID: 1b73cb0e-9f31-4b1d-9f50-f2aab6fd96c6
+2025-02-10 23:42:23 [INFO] Generating new code...
+2025-02-10 23:42:23 [INFO] Using Prompt: <tables>
+
+<table table_name="table_a2e389f9f9b55f3c974e75c41861bd80" dimensions="37x8">
+bookingDate,valueDate,bookingDateTime,valueDateTime,transactionAmount,creditorName,remittanceInformationUnstructured,internalTransactionId
+2025-01-02,2025-01-02,2025-01-02T00:00:00Z,2025-01-02T00:04:58.030Z,"{'amount': '-13.12', 'currency': 'GBP'}",DVLA,DVLA-LN61PYJ  000000000056504532 DDR,fc06b58dd668a7258adaa894be8d1a3f
+2025-01-02,2025-01-01,2025-01-02T00:00:00Z,2025-01-01T09:50:31.130Z,"{'amount': '-60.00', 'currency': 'GBP'}",SUMUP *NEW LOOK BA,SUMUP *NEW LOOK BA  ON 31 DEC BCC,1317cc9763a3561a0d90de0546ed7bc6
+2025-01-02,2024-12-31,2025-01-02T00:00:00Z,2024-12-31T21:41:46.030Z,"{'amount': '-50.00', 'currency': 'GBP'}",,SAINSBURYS BANK Sainsburys Bank 31DEC 21.41 ATM,716c32e620feb49b61d6ebbc4b59bbfd
+2024-12-27,2024-12-27,2024-12-27T00:00:00Z,2024-12-27T09:27:39.140Z,"{'amount': '-15.59', 'currency': 'GBP'}",KLARNA*ZOOM COMMUN,KLARNA*ZOOM COMMUN  ON 26 DEC BCC,45821fc8a5f29ae9ddd255b39668df8f
+2024-12-27,2024-12-25,2024-12-27T00:00:00Z,2024-12-25T10:02:13.070Z,"{'amount': '-50.00', 'currency': 'GBP'}",THE HUB DENTAL PRA,THE HUB DENTAL PRA  ON 24 DEC BCC,77877a31cbe2c17bceae0660c38e1839
+</table>
+
+
+</tables>
+
+You are already provided with the following functions that you can call:
+<function>
+def execute_sql_query(sql_query: str) -> pd.Dataframe
+    """This method connects to the database, executes the sql query and returns the dataframe"""
+</function>
+
+
+Update this initial code:
+```python
+# TODO: import the required dependencies
+import pandas as pd
+
+# Write code here
+
+# Declare result var: 
+type (possible values "string", "number", "dataframe", "plot"). Examples: { "type": "string", "value": f"The highest salary is {highest_salary}." } or { "type": "number", "value": 125 } or { "type": "dataframe", "value": pd.DataFrame({...}) } or { "type": "plot", "value": "temp_chart.png" }
+
+```
+
+
+
+### QUERY
+ Which are the top 5 countries by sales?
+
+At the end, declare "result" variable as a dictionary of type and value.
+
+
+Generate python code and return full updated code:
+
+### Note: Use only relevant table for query and do aggregation, sorting, joins and grouby through sql query
+2025-02-10 23:42:31 [INFO] An error occurred during code generation: No code found in the response
+2025-02-10 23:42:31 [INFO] Stack Trace:
+Traceback (most recent call last):
+  File "/Users/michaelali/Repos/bankstream.io/venv/lib/python3.11/site-packages/pandasai/core/code_generation/base.py", line 34, in generate_code
+    code = self._context.config.llm.generate_code(prompt, self._context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/michaelali/Repos/bankstream.io/venv/lib/python3.11/site-packages/pandasai/llm/base.py", line 173, in generate_code
+    return self._extract_code(response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/michaelali/Repos/bankstream.io/venv/lib/python3.11/site-packages/pandasai/llm/base.py", line 118, in _extract_code
+    raise NoCodeFoundError("No code found in the response")
+pandasai.exceptions.NoCodeFoundError: No code found in the response
+
+2025-02-10 23:51:58 [INFO] Question: What are the total expenses for January 2025?
+2025-02-10 23:51:58 [INFO] Running PandaAI with bamboo_llm LLM...
+2025-02-10 23:51:58 [INFO] Prompt ID: ca9a8d02-a878-467f-a251-61cf75e3778c
+2025-02-10 23:51:58 [INFO] Generating new code...
+2025-02-10 23:51:58 [INFO] Using Prompt: <tables>
+
+<table table_name="table_0688ccf2ea6836f1bf70c9614bbbdf58" dimensions="37x9">
+bookingDate,valueDate,bookingDateTime,valueDateTime,creditorName,remittanceInformationUnstructured,internalTransactionId,currency,amount
+2025-01-02,2025-01-02,2025-01-02T00:00:00Z,2025-01-02T00:04:58.030Z,DVLA,DVLA-LN61PYJ  000000000056504532 DDR,fc06b58dd668a7258adaa894be8d1a3f,GBP,-1312
+2025-01-02,2025-01-01,2025-01-02T00:00:00Z,2025-01-01T09:50:31.130Z,SUMUP *NEW LOOK BA,SUMUP *NEW LOOK BA  ON 31 DEC BCC,1317cc9763a3561a0d90de0546ed7bc6,GBP,-6000
+2025-01-02,2024-12-31,2025-01-02T00:00:00Z,2024-12-31T21:41:46.030Z,,SAINSBURYS BANK Sainsburys Bank 31DEC 21.41 ATM,716c32e620feb49b61d6ebbc4b59bbfd,GBP,-5000
+2024-12-27,2024-12-27,2024-12-27T00:00:00Z,2024-12-27T09:27:39.140Z,KLARNA*ZOOM COMMUN,KLARNA*ZOOM COMMUN  ON 26 DEC BCC,45821fc8a5f29ae9ddd255b39668df8f,GBP,-1559
+2024-12-27,2024-12-25,2024-12-27T00:00:00Z,2024-12-25T10:02:13.070Z,THE HUB DENTAL PRA,THE HUB DENTAL PRA  ON 24 DEC BCC,77877a31cbe2c17bceae0660c38e1839,GBP,-5000
+</table>
+
+
+</tables>
+
+You are already provided with the following functions that you can call:
+<function>
+def execute_sql_query(sql_query: str) -> pd.Dataframe
+    """This method connects to the database, executes the sql query and returns the dataframe"""
+</function>
+
+
+Update this initial code:
+```python
+# TODO: import the required dependencies
+import pandas as pd
+
+# Write code here
+
+# Declare result var: 
+type (possible values "string", "number", "dataframe", "plot"). Examples: { "type": "string", "value": f"The highest salary is {highest_salary}." } or { "type": "number", "value": 125 } or { "type": "dataframe", "value": pd.DataFrame({...}) } or { "type": "plot", "value": "temp_chart.png" }
+
+```
+
+
+
+### QUERY
+ What are the total expenses for January 2025?
+
+At the end, declare "result" variable as a dictionary of type and value.
+
+
+Generate python code and return full updated code:
+
+### Note: Use only relevant table for query and do aggregation, sorting, joins and grouby through sql query
+2025-02-10 23:52:06 [INFO] Code Generated:
+# Required dependencies
+import pandas as pd
+
+# SQL query to get total expenses for January 2025
+sql_query = """
+            SELECT SUM(amount) AS total_expenses
+            FROM table_0688ccf2ea6836f1bf70c9614bbbdf58
+            WHERE bookingDate BETWEEN '2025-01-01' AND '2025-01-31'
+            AND amount < 0
+            """
+
+# Execute the sql query
+df = execute_sql_query(sql_query)
+
+# Extract the total expenses value
+total_expenses = df['total_expenses'][0]
+
+# Declare result var: 
+result = {
+    "type": "number",
+    "value": total_expenses
+}
+
+result
+2025-02-10 23:52:06 [INFO] Validating code requirements...
+2025-02-10 23:52:06 [INFO] Code validation successful.
+2025-02-10 23:52:06 [INFO] Cleaning the generated code...
+2025-02-10 23:52:06 [INFO] Executing code: import pandas as pd
+sql_query = """
+            SELECT SUM(amount) AS total_expenses
+            FROM table_0688ccf2ea6836f1bf70c9614bbbdf58
+            WHERE bookingDate BETWEEN '2025-01-01' AND '2025-01-31'
+            AND amount < 0
+            """
+df = execute_sql_query(sql_query)
+total_expenses = df['total_expenses'][0]
+result = {'type': 'number', 'value': total_expenses}
+result
+2025-02-10 23:52:06 [INFO] Response generated successfully.
+2025-02-10 23:56:38 [INFO] Question: What are the total expenses for 2024?
+2025-02-10 23:56:38 [INFO] Running PandaAI with bamboo_llm LLM...
+2025-02-10 23:56:38 [INFO] Prompt ID: 7bffd181-e79b-4197-af3d-220bbc42ab96
+2025-02-10 23:56:38 [INFO] Generating new code...
+2025-02-10 23:56:38 [INFO] Using Prompt: <tables>
+
+<table table_name="table_0a0fe8cad351f24243e003033e37063e" dimensions="37x8">
+valueDate,bookingDateTime,valueDateTime,creditorName,remittanceInformationUnstructured,internalTransactionId,currency,amount
+2025-01-02,2025-01-02T00:00:00Z,2025-01-02T00:04:58.030Z,DVLA,DVLA-LN61PYJ  000000000056504532 DDR,fc06b58dd668a7258adaa894be8d1a3f,GBP,-1312
+2025-01-01,2025-01-02T00:00:00Z,2025-01-01T09:50:31.130Z,SUMUP *NEW LOOK BA,SUMUP *NEW LOOK BA  ON 31 DEC BCC,1317cc9763a3561a0d90de0546ed7bc6,GBP,-6000
+2024-12-31,2025-01-02T00:00:00Z,2024-12-31T21:41:46.030Z,,SAINSBURYS BANK Sainsburys Bank 31DEC 21.41 ATM,716c32e620feb49b61d6ebbc4b59bbfd,GBP,-5000
+2024-12-27,2024-12-27T00:00:00Z,2024-12-27T09:27:39.140Z,KLARNA*ZOOM COMMUN,KLARNA*ZOOM COMMUN  ON 26 DEC BCC,45821fc8a5f29ae9ddd255b39668df8f,GBP,-1559
+2024-12-25,2024-12-27T00:00:00Z,2024-12-25T10:02:13.070Z,THE HUB DENTAL PRA,THE HUB DENTAL PRA  ON 24 DEC BCC,77877a31cbe2c17bceae0660c38e1839,GBP,-5000
+</table>
+
+
+</tables>
+
+You are already provided with the following functions that you can call:
+<function>
+def execute_sql_query(sql_query: str) -> pd.Dataframe
+    """This method connects to the database, executes the sql query and returns the dataframe"""
+</function>
+
+
+Update this initial code:
+```python
+# TODO: import the required dependencies
+import pandas as pd
+
+# Write code here
+
+# Declare result var: 
+type (possible values "string", "number", "dataframe", "plot"). Examples: { "type": "string", "value": f"The highest salary is {highest_salary}." } or { "type": "number", "value": 125 } or { "type": "dataframe", "value": pd.DataFrame({...}) } or { "type": "plot", "value": "temp_chart.png" }
+
+```
+
+
+
+### QUERY
+ What are the total expenses for 2024?
+
+At the end, declare "result" variable as a dictionary of type and value.
+
+
+Generate python code and return full updated code:
+
+### Note: Use only relevant table for query and do aggregation, sorting, joins and grouby through sql query
+2025-02-10 23:56:47 [INFO] Code Generated:
+# import the required dependencies
+import pandas as pd
+
+def execute_sql_query(sql_query: str):
+    """This method connects to the database, executes the sql query and returns the dataframe"""
+
+# Write SQL query to get total expenses for 2024
+sql_query = "SELECT SUM(amount) as total_expenses FROM table_0a0fe8cad351f24243e003033e37063e WHERE valueDate LIKE '2024%' AND amount < 0"
+
+# Execute SQL query and get the result
+expenses_df = execute_sql_query(sql_query)
+
+# Get the total expenses from the result
+total_expenses = expenses_df['total_expenses'][0]
+
+# Declare result var: 
+result = { "type": "number", "value": total_expenses }
+2025-02-10 23:56:48 [INFO] Validating code requirements...
+2025-02-10 23:56:48 [INFO] Code validation successful.
+2025-02-10 23:56:48 [INFO] Cleaning the generated code...
+2025-02-10 23:56:48 [INFO] Executing code: import pandas as pd
+sql_query = "SELECT SUM(amount) as total_expenses FROM table_0a0fe8cad351f24243e003033e37063e WHERE valueDate LIKE '2024%' AND amount < 0"
+expenses_df = execute_sql_query(sql_query)
+total_expenses = expenses_df['total_expenses'][0]
+result = {'type': 'number', 'value': total_expenses}
+2025-02-10 23:56:48 [INFO] Response generated successfully.
+2025-02-11 01:44:40 [INFO] HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-02-11 02:34:48 [INFO] HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-02-11 02:37:09 [INFO] HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-02-11 02:38:31 [INFO] Starting transaction classification process
+2025-02-11 02:38:31 [INFO] Starting to process 1 transactions
+2025-02-11 02:38:31 [INFO] Initializing TransactionClassifier
+2025-02-11 02:38:31 [INFO] Processing transaction 1/1
+2025-02-11 02:38:31 [INFO] Processing transaction: Office supplies purchase from Staples
+2025-02-11 02:38:32 [INFO] HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-02-11 02:38:32 [WARNING] Direct JSON parsing failed, attempting to extract JSON from response
+2025-02-11 02:38:32 [INFO] Successfully extracted and parsed JSON from response
+2025-02-11 02:38:32 [INFO] Classification successful: 6410 - Office Supplies
+2025-02-11 02:38:32 [INFO] Finished processing all transactions
+2025-02-11 02:38:32 [INFO] Classification process completed
+2025-02-11 02:38:32 [INFO] Classification Results:
+2025-02-11 02:38:32 [INFO] Description: Office supplies purchase from Staples
+2025-02-11 02:38:32 [INFO] Account Code: 6410 - Office Supplies
+2025-02-11 02:38:32 [INFO] Reason: This transaction is classified as an office supplies purchase because it is a routine restock of supplies from a known office supply vendor, Staples. The description and context both support this classification, indicating a typical expense for a business.
+2025-02-11 02:38:32 [INFO] Confidence: 0.98
+2025-02-11 02:38:32 [INFO] Starting to process 1 transactions
+2025-02-11 02:38:32 [INFO] Initializing TransactionClassifier
+2025-02-11 02:38:32 [INFO] Processing transaction 1/1
+2025-02-11 02:38:32 [INFO] Processing transaction: Office supplies purchase from Staples
+2025-02-11 02:38:32 [INFO] HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-02-11 02:38:32 [WARNING] Direct JSON parsing failed, attempting to extract JSON from response
+2025-02-11 02:38:32 [INFO] Successfully extracted and parsed JSON from response
+2025-02-11 02:38:32 [INFO] Classification successful: 6410-Office Supplies
+2025-02-11 02:38:32 [INFO] Finished processing all transactions
