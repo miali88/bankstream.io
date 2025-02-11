@@ -36,3 +36,5 @@ Thumbs.db
 dist/
 build/
 *.egg-info/
+
+bank_data_23-25/
