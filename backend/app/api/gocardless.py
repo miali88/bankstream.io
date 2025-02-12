@@ -10,11 +10,8 @@ router = APIRouter()
 class BankListResponse(BaseModel):
     id: str
     name: str
-    bic: str
     transaction_total_days: str
-    countries: list
     logo: str
-    max_access_valid_for_days: str
 
 class BuildLinkResponse(BaseModel):
     link: str

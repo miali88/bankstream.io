@@ -33,8 +33,6 @@ class SupabaseConnection:
                     logger.info("Initializing Supabase client...")
                     # Use the validated variables from top level instead
                     try:
-                        logger.info(f"Using Supabase URL: {SUPABASE_URL[:20]}...")  # Log partial URL for security
-                        logger.info(f"API Key length: {len(SUPABASE_ANON_KEY)}")
                         cls._client = AsyncClient(SUPABASE_URL, SUPABASE_ANON_KEY)
                         cls._initialized = True
                         logger.info("Supabase client initialized successfully")
