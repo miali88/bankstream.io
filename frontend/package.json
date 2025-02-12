@@ -12,7 +12,9 @@
   },
   "dependencies": {
     "@clerk/remix": "^4.4.23",
+    "@radix-ui/react-checkbox": "^1.1.4",
     "@radix-ui/react-dialog": "^1.1.6",
+    "@radix-ui/react-select": "^2.1.6",
     "@radix-ui/react-slot": "^1.1.2",
     "@remix-run/node": "^2.15.3",
     "@remix-run/react": "^2.15.3",
@@ -22,6 +24,7 @@
     "clsx": "^2.1.1",
     "isbot": "^4.1.0",
     "lucide-react": "^0.475.0",
+    "qrcode.react": "^4.2.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "tailwind-merge": "^3.0.1",

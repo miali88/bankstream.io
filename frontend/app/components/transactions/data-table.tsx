@@ -19,7 +19,6 @@ import {
   TableRow,
 } from "../ui/table";
 import { Button } from "../ui/button";
-import { Input } from "../ui/input";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -46,15 +45,6 @@ export function DataTable<TData, TValue>({
 
   return (
     <div>
-      <div className="flex items-center justify-between py-4">
-        <Input
-          placeholder="Search all columns..."
-          value={globalFilter ?? ""}
-          onChange={(event) => setGlobalFilter(event.target.value)}
-          className="max-w-sm"
-        />
-        <Button>Add Accounts</Button>
-      </div>
       <div className="rounded-md border">
         <Table>
           <TableHeader>
