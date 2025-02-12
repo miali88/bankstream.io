@@ -27,27 +27,33 @@ async def get_access_token():
     return access_token
 
 ''' FETCH LIST OF BANKS '''
-async def fetch_list_of_banks():
+async def fetch_list_of_banks(country: str = "GB"):
     print("\nfetch_list_of_banks called")
     access_token = await get_access_token()
     access_token = access_token['access']
     url = "https://bankaccountdata.gocardless.com/api/v2/institutions/"
     params = {
-        # "country": "gb"
+        "country": country
     }
     headers = {
         "accept": "application/json",
         "Authorization": f"Bearer {access_token}"
     }
 
-    list_of_banks = requests.get(url, headers=headers, params=params)
-
-    if list_of_banks.status_code == 200:
-        list_of_banks = list_of_banks.json()
-        return list_of_banks
+    response = requests.get(url, headers=headers, params=params)
+    if response.status_code == 200:
+        banks_data = response.json()
+        # Print detailed structure of the response
+        print("\n=== Banks Data Structure ===")
+        for bank in banks_data:
+            print("\nBank Fields:")
+            for key, value in bank.items():
+                print(f"{key}: {value}")
+        return banks_data
     else:
-        print("Error:", list_of_banks.text)
-        list_of_banks.raise_for_status()  # Raise exception for non-200 responses
+        print("Error:", response.text)
+        response.raise_for_status()
+
 
 async def build_link(institution_id: str):
     print("\nbuild_link called")
@@ -99,3 +105,21 @@ async def build_link(institution_id: str):
         print(f"Error making request: {e}")
         raise
 
+async def get_accounts():
+    print("\nget_accounts called")
+    access_token = await get_access_token()
+    access_token = access_token['access']
+
+    url = "https://bankaccountdata.gocardless.com/api/v2/accounts/"
+    headers = {
+        "accept": "application/json",
+        "Authorization": f"Bearer {access_token}"
+    }
+    
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        return response.json()
+    else:
+        print("Error:", response.text)
+        response.raise_for_status()
+        
