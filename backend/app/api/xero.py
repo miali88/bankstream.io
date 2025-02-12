@@ -20,3 +20,5 @@ async def get_chart_of_accounts():
             raise HTTPException(status_code=response.status_code, detail="Failed to fetch accounts")
         
         return response.json()
+
+

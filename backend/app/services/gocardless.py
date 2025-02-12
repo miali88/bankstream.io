@@ -54,6 +54,7 @@ async def fetch_list_of_banks(country: str = "GB"):
         print("Error:", response.text)
         response.raise_for_status()
 
+
 async def build_link(institution_id: str):
     print("\nbuild_link called")
     access_token = await get_access_token()
