@@ -22,8 +22,7 @@
     "scripts": {
         "build": "rollup -c",
         "watch": "rollup -c -w",
-        "fix:prettier": "prettier 'package/src/*.js' --write",
-        "prepare": "husky install"
+        "fix:prettier": "prettier 'package/src/*.js' --write"
     },
     "prettier": {
         "semi": true,
@@ -36,7 +35,6 @@
     "browserslist": "last 10 versions",
     "devDependencies": {
         "autoprefixer": "^10.3.4",
-        "husky": "^8.0.2",
         "prettier": "2.6.2",
         "rollup": "^2.56.3",
         "rollup-plugin-postcss": "^4.0.1",
