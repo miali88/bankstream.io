@@ -21,4 +21,9 @@ export default defineConfig({
     }),
     tsconfigPaths(),
   ],
+  server: {
+    allowedHosts: [
+      'internally-wise-spaniel.eu.ngrok.io'
+    ],
+  },
 });

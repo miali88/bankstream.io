@@ -55,7 +55,6 @@ async def fetch_list_of_banks(country: str = "GB"):
         logger.error(f"Failed to fetch banks: {response.text}")
         response.raise_for_status()
 
-
 async def store_link_data(link_data: dict):
     logger.info("Storing link data in Supabase")
     supabase = await get_supabase()
@@ -70,7 +69,7 @@ async def store_link_data(link_data: dict):
     }
     
     try:
-        result = await supabase.table('gocardless').insert(data).execute()
+        result = await supabase.table('gocardless_agreement').insert(data).execute()
         logger.info("Link data stored successfully")
         return result
     except Exception as e:
@@ -156,4 +155,11 @@ async def get_accounts():
     else:
         logger.error(f"Failed to get accounts: {response.text}")
         response.raise_for_status()
-        
+
+
+
+async def get_transactions(account_id: str):
+    logger.info(f"Retrieving transactions for account_id: {account_id}")
+    access_token = await get_access_token()
+    access_token = access_token['access']
+

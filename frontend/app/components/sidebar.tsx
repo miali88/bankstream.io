@@ -1,6 +1,6 @@
 import { Link, useLocation } from "@remix-run/react";
 import { cn } from "../lib/utils";
-import { BarChart3, Receipt, LogOut } from "lucide-react";
+import { BarChart3, Receipt, LogOut, BookOpen } from "lucide-react";
 import { Button } from "./ui/button";
 
 const sidebarItems = [
@@ -10,9 +10,14 @@ const sidebarItems = [
     href: "/dashboard/transactions",
   },
   {
-    title: "Charts",
+    title: "Hub",
     icon: BarChart3,
-    href: "/dashboard/charts",
+    href: "/dashboard/hub",
+  },
+  {
+    title: "Chart of Accounts",
+    icon: BookOpen,
+    href: "/dashboard/chart-of-accounts",
   },
 ];
 
