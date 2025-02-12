@@ -1,6 +1,6 @@
 import { Link, useLocation } from "@remix-run/react";
 import { cn } from "../lib/utils";
-import { BarChart3, Receipt } from "lucide-react";
+import { BarChart3, Receipt, LogOut } from "lucide-react";
 import { Button } from "./ui/button";
 
 const sidebarItems = [
@@ -42,24 +42,34 @@ export function SidebarContent({ location, setOpen }: SidebarContentProps) {
           <span className="sr-only">Toggle theme</span>
         </Button> */}
       </div>
-      <nav className="space-y-1 p-2">
-        {sidebarItems.map((item) => (
+      <nav className="space-y-1 p-2 flex flex-col h-full">
+        <div className="flex-1">
+          {sidebarItems.map((item) => (
+            <Button
+              key={item.href}
+              variant={location.pathname === item.href ? "secondary" : "ghost"}
+              className={cn(
+                "w-full justify-start gap-2",
+                location.pathname === item.href && "bg-secondary"
+              )}
+              onClick={() => setOpen?.(false)}
+              asChild
+            >
+              <Link prefetch="intent" to={item.href}>
+                <item.icon className="h-4 w-4" />
+                {item.title}
+              </Link>
+            </Button>
+          ))}
           <Button
-            key={item.href}
-            variant={location.pathname === item.href ? "secondary" : "ghost"}
-            className={cn(
-              "w-full justify-start gap-2",
-              location.pathname === item.href && "bg-secondary"
-            )}
-            onClick={() => setOpen?.(false)}
-            asChild
+            variant="ghost"
+            className="w-full justify-start gap-2"
+            onClick={() => (window.location.href = "/")}
           >
-            <Link prefetch="intent" to={item.href}>
-              <item.icon className="h-4 w-4" />
-              {item.title}
-            </Link>
+            <LogOut className="h-4 w-4" />
+            Logout
           </Button>
-        ))}
+        </div>
       </nav>
     </>
   );

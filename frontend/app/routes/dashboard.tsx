@@ -5,7 +5,14 @@ import { Sheet, SheetContent, SheetTrigger } from "../components/ui/sheet";
 import { useState } from "react";
 import { SidebarContent } from "../components/sidebar";
 
-export default function Dashboard() {
+export const ssr = false;
+
+// Add a loader to prevent indefinite loading
+export function clientLoader() {
+  return { ok: true };
+}
+
+function Dashboard() {
   const location = useLocation();
   const [open, setOpen] = useState(false);
 
@@ -45,3 +52,5 @@ export default function Dashboard() {
     </div>
   );
 }
+
+export default Dashboard;

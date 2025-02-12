@@ -4,14 +4,11 @@
 
 html,
 body {
-  @apply bg-white dark:bg-black;
+  @apply bg-white dark:bg-gray-950;
 
   @media (prefers-color-scheme: dark) {
     color-scheme: dark;
   }
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
 }
 
 @layer base {

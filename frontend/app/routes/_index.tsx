@@ -1,6 +1,7 @@
-import type { MetaFunction } from "@remix-run/node";
+import { type MetaFunction } from "@remix-run/node";
 import { Link } from "@remix-run/react";
 import { Button } from "../components/ui/button";
+import { UserButton } from "@clerk/remix";
 
 export const meta: MetaFunction = () => {
   return [
@@ -15,9 +16,12 @@ export default function Index() {
       <nav className="border-b">
         <div className=" flex w-full justify-between h-14 items-center px-4">
           <div className="mr-4 font-semibold">Bankstream</div>
-          <Button asChild variant="default">
-            <Link to="/dashboard/transactions">Dashboard</Link>
-          </Button>
+          <div>
+            <UserButton />
+            <Button asChild variant="default">
+              <Link to="/dashboard/transactions">Dashboard</Link>
+            </Button>
+          </div>
         </div>
       </nav>
       <div className="flex-1 flex items-center justify-center">
