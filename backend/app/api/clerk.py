@@ -3,7 +3,7 @@ import logging
 import os 
 
 from svix.webhooks import Webhook, WebhookVerificationError
-# from services.clerk import post_user, get_clerk_private_metadata
+from app.services.clerk import post_user
 
 router = APIRouter()
 
@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-@router.post('')
+@router.post('/webhook')
 async def handle_clerk_event(request: Request, svix_id: str = Header(None), \
                              svix_timestamp: str = Header(None), svix_signature: str = Header(None)):
     print("\n\nclerk endpoint:\n\n")
@@ -41,7 +41,7 @@ async def handle_clerk_event(request: Request, svix_id: str = Header(None), \
 
     if event_type == "user.created":
         print("user created")
-        # await post_user(event)
+        await post_user(event)
         
     elif event_type == "session.created":
         print("session created")

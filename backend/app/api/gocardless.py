@@ -27,7 +27,7 @@ async def get_list_of_banks(country: str = "GB"):
 
 
 """ step 2, we build a link to the chosen bank, and return the link for user to approve our access """
-@router.post("/build_link")
+@router.get("/build_link")
 async def build_bank_link(institution_id: str):
     print("\n /build_link called")
     try:
