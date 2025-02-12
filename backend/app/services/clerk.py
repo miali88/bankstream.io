@@ -79,10 +79,7 @@ async def post_user(payload):
         # Prepare user data matching the table schema
         user_record = {
             'user_id': user_data.get('id'),
-            'username': default_username,
             'email': primary_email,
-            'phone_number': None,
-            'role': 'user',
             'user_plan': 'free',
             # 'stripe_customer_id': stripe_customer.id  # Add Stripe customer ID to user record
         }
