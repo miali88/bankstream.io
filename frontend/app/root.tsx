@@ -1,9 +1,11 @@
+/* eslint-disable import/no-unresolved */
 import {
   Links,
   Meta,
   Outlet,
   Scripts,
   ScrollRestoration,
+  LiveReload,
 } from "@remix-run/react";
 import type { LinksFunction, LoaderFunction } from "@remix-run/node";
 
@@ -12,6 +14,7 @@ import { rootAuthLoader } from "@clerk/remix/ssr.server";
 import "./tailwind.css";
 
 import { ClerkApp } from "@clerk/remix";
+import { Toaster } from "~/components/ui/toaster";
 
 export const links: LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -39,12 +42,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         {children}
+        <Outlet />
+        <Toaster />
         <ScrollRestoration />
         <Scripts />
+        <LiveReload />
       </body>
     </html>
   );
 }
+
 function App() {
   return <Outlet />;
 }

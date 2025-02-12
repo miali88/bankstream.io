@@ -6,6 +6,10 @@ import { Input } from "~/components/ui/input";
 import { AddAccountDialog } from "~/components/transactions/add-account-dialog";
 import type { LoaderFunction, ActionFunction } from "@remix-run/node";
 import { getBankList, getBuildLink } from "~/api/transactions";
+import { useSearchParams } from "@remix-run/react";
+import { useEffect } from "react";
+import { useToast } from "~/components/ui/use-toast";
+import { CheckCircle } from "lucide-react";
 
 interface CountryData {
   cca2: string;
@@ -89,6 +93,27 @@ export const action: ActionFunction = async ({ request }) => {
 };
 
 export default function Transactions() {
+  const [searchParams] = useSearchParams();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (searchParams.get("trx") === "succeed") {
+      toast({
+        variant: "default",
+        className: "bg-white border-green-500",
+        description: (
+          <div className="flex items-center gap-2 text-green-900">
+            <CheckCircle className="h-4 w-4" />
+            <span className="text-black">
+              Transaction successfully completed
+            </span>
+          </div>
+        ),
+        duration: 3000, // 3 seconds
+      });
+    }
+  }, [searchParams, toast]);
+
   return (
     <div>
       <h2 className="text-xl font-semibold mb-4">Transactions</h2>
