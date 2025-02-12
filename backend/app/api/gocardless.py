@@ -19,11 +19,14 @@ class BankListResponse(BaseModel):
 class BuildLinkResponse(BaseModel):
     link: str
 
+""" step 1, user selects country and selects their bank from the list of banks """
 @router.get("/bank_list")
-async def get_list_of_banks():
+async def get_list_of_banks(country: str = "GB"):
     print("\n /list-of-banks called")
-    return await gocardless.fetch_list_of_banks()
+    return await gocardless.fetch_list_of_banks(country)
 
+
+""" step 2, we build a link to the chosen bank, and return the link for user to approve our access """
 @router.post("/build_link")
 async def build_bank_link(institution_id: str):
     print("\n /build_link called")
@@ -32,3 +35,4 @@ async def build_bank_link(institution_id: str):
         return {"link": link}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    

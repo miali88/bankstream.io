@@ -27,13 +27,13 @@ async def get_access_token():
     return access_token
 
 ''' FETCH LIST OF BANKS '''
-async def fetch_list_of_banks():
+async def fetch_list_of_banks(country: str = "GB"):
     print("\nfetch_list_of_banks called")
     access_token = await get_access_token()
     access_token = access_token['access']
     url = "https://bankaccountdata.gocardless.com/api/v2/institutions/"
     params = {
-        # "country": "gb"
+        "country": country
     }
     headers = {
         "accept": "application/json",
