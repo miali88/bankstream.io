@@ -2,6 +2,7 @@ import { type MetaFunction } from "@remix-run/node";
 import { Link } from "@remix-run/react";
 import { Button } from "~/components/ui/button";
 import { UserButton } from "@clerk/remix";
+import { useAuth } from "@clerk/remix";
 
 export const meta: MetaFunction = () => {
   return [
@@ -11,6 +12,8 @@ export const meta: MetaFunction = () => {
 };
 
 export default function Index() {
+  const { userId } = useAuth();
+
   return (
     <div className="flex flex-col h-screen">
       <nav className="border-b">
@@ -18,9 +21,11 @@ export default function Index() {
           <div className="mr-4 font-semibold">Bankstream</div>
           <div className="flex items-center gap-2">
             <UserButton />
-            <Button asChild variant="outline">
-              <Link to="/sign-in">Sign In</Link>
-            </Button>
+            {!userId && (
+              <Button asChild variant="outline">
+                <Link to="/sign-in">Sign In</Link>
+              </Button>
+            )}
             <Button asChild variant="default">
               <Link to="/dashboard/transactions">Dashboard</Link>
             </Button>

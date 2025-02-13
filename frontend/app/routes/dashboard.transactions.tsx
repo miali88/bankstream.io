@@ -10,6 +10,9 @@ import { useSearchParams } from "@remix-run/react";
 import { useEffect } from "react";
 import { useToast } from "~/components/ui/use-toast";
 import { CheckCircle } from "lucide-react";
+import { useAuth } from "@clerk/remix";
+import { redirect } from "@remix-run/node";
+import { getAuth } from "@clerk/remix/ssr.server";
 
 interface CountryData {
   cca2: string;
@@ -45,41 +48,58 @@ const ALLOWED_COUNTRIES: Record<string, string> = {
   GB: "United Kingdom",
 };
 
-export const clientLoader: LoaderFunction = async () => {
+export const loader: LoaderFunction = async (args) => {
+  const { userId, getToken } = await getAuth(args);
+  
+  if (!userId) {
+    return redirect("/sign-in");
+  }
+
+  const token = await getToken();
+  
   // Fetch countries data from an API
   const response = await fetch("https://restcountries.com/v3.1/all");
   const data = await response.json();
 
-  // Filter and transform the data to match our needs
   const countries = data
     .filter((country: CountryData) => ALLOWED_COUNTRIES[country.cca2])
     .map((country: CountryData) => ({
       code: country.cca2,
-      name: ALLOWED_COUNTRIES[country.cca2], // Use our predefined names
+      name: ALLOWED_COUNTRIES[country.cca2],
       flag: country.flag,
     }))
     .sort((a: { name: string }, b: { name: string }) =>
       a.name.localeCompare(b.name)
-    ); // Sort alphabetically by name
+    );
 
-  return { countries };
+  return { countries, token };
 };
 
-export const action: ActionFunction = async ({ request }) => {
+export const action: ActionFunction = async (args) => {
+  const { userId, getToken } = await getAuth(args);
+  
+  if (!userId) {
+    throw new Error("Not authenticated");
+  }
+
+  const token = await getToken();
+  const { request } = args;
   const formData = await request.formData();
-  const country = formData.get("country") as string;
-  const bankId = formData.get("bankId") as string;
+  const countryValue = formData.get("country");
+  const bankIdValue = formData.get("bankId");
 
   try {
-    if (country) {
-      const bankList = await getBankList(country);
+    if (countryValue) {
+      const bankList = await getBankList(String(countryValue), token);
       return { bankList };
     }
 
-    if (bankId) {
-      const { link } = await getBuildLink(bankId);
+    if (bankIdValue) {
+      const { link } = await getBuildLink(String(bankIdValue), token);
       return { link };
     }
+
+    throw new Error("Invalid form data provided");
   } catch (error) {
     console.error("Error:", error);
     throw new Error("Failed to process request");

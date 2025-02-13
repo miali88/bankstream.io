@@ -4,8 +4,19 @@ import { Button } from "../components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "../components/ui/sheet";
 import { useState } from "react";
 import { SidebarContent } from "../components/sidebar";
+import { getAuth } from "@clerk/remix/ssr.server";
+import { redirect } from "@remix-run/node";
+import type { LoaderFunction } from "@remix-run/node";
 
 export const ssr = false;
+
+export const loader: LoaderFunction = async (args) => {
+  const { userId } = await getAuth(args);
+  if (!userId) {
+    return redirect("/sign-in");
+  }
+  return { ok: true };
+};
 
 // Add a loader to prevent indefinite loading
 export function clientLoader() {

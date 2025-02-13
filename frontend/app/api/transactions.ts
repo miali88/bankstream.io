@@ -1,6 +1,6 @@
 import { buildUrl } from "./config";
 
-export async function getBankList(country: string) {
+export async function getBankList(country: string, token: string) {
   const searchParams = new URLSearchParams({ country });
   const url = buildUrl("gocardless/bank_list", searchParams);
 
@@ -8,6 +8,7 @@ export async function getBankList(country: string) {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`,
     },
   });
 
@@ -21,7 +22,7 @@ export async function getBankList(country: string) {
   return await response.json();
 }
 
-export async function getBuildLink(institutionId: string) {
+export async function getBuildLink(institutionId: string, token: string) {
   const searchParams = new URLSearchParams({ institution_id: institutionId });
   const url = buildUrl("gocardless/build_link", searchParams);
 
@@ -29,6 +30,7 @@ export async function getBuildLink(institutionId: string) {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`,
     },
   });
 

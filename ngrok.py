@@ -9,7 +9,7 @@ logging.info('Starting ngrok tunnel setup')
 try:
 
     """ static domain"""
-    port = 5173
+    port = 8001
     http_tunnel_static = ngrok.connect(addr=f"http://localhost:{port}", subdomain="internally-wise-spaniel")
     logging.info(f"ngrok tunnel for port {port} established -> {http_tunnel_static.public_url}")
     
