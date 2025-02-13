@@ -36,18 +36,8 @@ const columns: ColumnDef<ChartOfAccount>[] = [
 ];
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  const BASE_API_URL = process.env.BASE_API_URL;
-  if (!BASE_API_URL) {
-    throw new Error("API_BASE_URL is not defined");
-  }
-
-  const response = await fetch(`${BASE_API_URL}/xero/chart_of_accounts`);
-  if (!response.ok) {
-    throw new Error("Failed to fetch chart of accounts");
-  }
-
-  const data = await response.json();
-  return json({ accounts: data });
+  const accounts = await import('../../public/CoA.json');
+  return json({ accounts: accounts.default });
 }
 
 export default function ChartOfAccounts() {
