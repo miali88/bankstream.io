@@ -8,7 +8,6 @@ ACCESS_TOKEN = "your_access_token_here"
 
 # class ChartOfAccountsResponse(BaseModel):
 
-
 @app.get("/chart-of-accounts")
 async def get_chart_of_accounts():
     headers = {

@@ -33,3 +33,11 @@ async def build_bank_link(institution_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
+
+""" step 3, redirect user to our site, fetch transactions for new accounts added """
+@router.get("/transactions")
+async def transactions(reference: str):
+    print("\n /transactions called")
+    return await gocardless.get_transactions(reference)
+
+
