@@ -18,7 +18,7 @@ class BuildLinkResponse(BaseModel):
 
 """ step 1, user selects country and selects their bank from the list of banks """
 @router.get("/bank_list")
-async def get_list_of_banks(country: str = "GB"):
+async def get_list_of_banks(country: str):
     print("\n /list-of-banks called")
     return await gocardless.fetch_list_of_banks(country)
 
