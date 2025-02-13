@@ -1,57 +1,44 @@
 import { ColumnDef } from "@tanstack/react-table";
 
-export interface Transaction {
-  bookingDate: string;
-  creditorName: string;
-  remittanceInfo: string;
-  currency: string;
-  amount: number;
-  coa_agent: string;
-  coa_reason: string;
-  coa_confidence: number;
-}
+import type { Transaction } from "~/routes/dashboard.transactions";
 
 export const columns: ColumnDef<Transaction>[] = [
   {
-    accessorKey: "bookingDate",
-    header: "Booking Date",
+    accessorKey: "creditor_name",
+    header: "Creditor",
+    cell: ({ row }) => row.getValue("creditor_name") || "N/A",
   },
   {
-    accessorKey: "creditorName",
-    header: "Creditor Name",
-  },
-  {
-    accessorKey: "remittanceInfo",
-    header: "Remittance Info",
-  },
-  {
-    accessorKey: "currency",
-    header: "Currency",
+    accessorKey: "debtor_name",
+    header: "Debtor",
+    cell: ({ row }) => row.getValue("debtor_name") || "N/A",
   },
   {
     accessorKey: "amount",
-    header: () => {
-      return <div className="text-right">Amount</div>;
-    },
+    header: "Amount",
     cell: ({ row }) => {
-      const amount = parseFloat(row.getValue("amount"));
-      return <div className="text-right font-medium">{amount.toFixed(2)}</div>;
+      const amountInPence = row.getValue("amount") as number;
+      const amountInMainUnit = amountInPence / 100; // Convert from pence to pounds/euros/etc
+      const currency = row.original.currency;
+      return new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: currency,
+      }).format(amountInMainUnit);
     },
   },
   {
-    accessorKey: "coa_agent",
-    header: "COA Agent",
+    accessorKey: "remittance_info",
+    header: "Description",
   },
   {
-    accessorKey: "coa_reason",
-    header: "COA Reason",
+    accessorKey: "code",
+    header: "Code",
   },
   {
-    accessorKey: "coa_confidence",
-    header: "Confidence",
+    accessorKey: "created_at",
+    header: "Date",
     cell: ({ row }) => {
-      const confidence = parseFloat(row.getValue("coa_confidence"));
-      return <div className="text-right">{(confidence * 100).toFixed(1)}%</div>;
+      return new Date(row.getValue("created_at")).toLocaleDateString();
     },
   },
 ];

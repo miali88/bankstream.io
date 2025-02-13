@@ -4,11 +4,16 @@
 
 html,
 body {
-  @apply bg-white dark:bg-gray-950;
+  @apply bg-background h-full;
 
   @media (prefers-color-scheme: dark) {
     color-scheme: dark;
   }
+}
+
+/* Make sure the root div takes full height */
+#root {
+  @apply min-h-full;
 }
 
 @layer base {

@@ -7,6 +7,7 @@ import { SidebarContent } from "../components/sidebar";
 import { getAuth } from "@clerk/remix/ssr.server";
 import { redirect } from "@remix-run/node";
 import type { LoaderFunction } from "@remix-run/node";
+import { UserButton } from "@clerk/remix";
 
 export const ssr = false;
 
@@ -55,6 +56,11 @@ function Dashboard() {
 
         {/* Main content */}
         <div className="flex-1 overflow-auto">
+          {/* Add Topbar with UserButton */}
+          <div className="border-b p-[13.8px] flex justify-end">
+            <UserButton afterSignOutUrl="/sign-in" />
+          </div>
+
           <div className="container p-6">
             <Outlet />
           </div>

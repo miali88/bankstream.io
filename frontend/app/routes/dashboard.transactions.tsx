@@ -6,7 +6,7 @@ import { AddAccountDialog } from "~/components/transactions/add-account-dialog";
 import type { LoaderFunction, ActionFunction } from "@remix-run/node";
 import { getBankList, getBuildLink } from "~/api/transactions";
 import { useSearchParams, useLoaderData } from "@remix-run/react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useToast } from "~/components/ui/use-toast";
 import { CheckCircle } from "lucide-react";
 import { redirect, json } from "@remix-run/node";
@@ -46,7 +46,7 @@ const ALLOWED_COUNTRIES: Record<string, string> = {
   GB: "United Kingdom",
 };
 
-interface Transaction {
+export interface Transaction {
   id: string;
   user_id: string;
   creditor_name: string | null;
@@ -60,13 +60,13 @@ interface Transaction {
 
 export const loader: LoaderFunction = async (args) => {
   const { userId, getToken } = await getAuth(args);
-  
+
   if (!userId) {
     return redirect("/sign-in");
   }
 
   const token = await getToken();
-  
+
   try {
     const transactionsResponse = await fetch(
       `${process.env.VITE_API_BASE_URL}/transactions`,
@@ -78,7 +78,7 @@ export const loader: LoaderFunction = async (args) => {
     );
 
     if (!transactionsResponse.ok) {
-      throw new Error('Failed to fetch transactions');
+      throw new Error("Failed to fetch transactions");
     }
 
     const transactions: Transaction[] = await transactionsResponse.json();
@@ -104,19 +104,19 @@ export const loader: LoaderFunction = async (args) => {
       transactions: transactions || [],
     });
   } catch (error) {
-    console.error('Error fetching transactions:', error);
-    return json({ 
+    console.error("Error fetching transactions:", error);
+    return json({
       countries: [],
       token,
       transactions: [],
-      error: 'Failed to fetch transactions' 
+      error: "Failed to fetch transactions",
     });
   }
 };
 
 export const action: ActionFunction = async (args) => {
   const { userId, getToken } = await getAuth(args);
-  
+
   if (!userId) {
     throw new Error("Not authenticated");
   }
@@ -149,6 +149,7 @@ export default function Transactions() {
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const { transactions } = useLoaderData<typeof loader>();
+  const [globalFilter, setGlobalFilter] = useState("");
 
   useEffect(() => {
     if (searchParams.get("trx") === "succeed") {
@@ -173,10 +174,20 @@ export default function Transactions() {
       <h2 className="text-xl font-semibold mb-4">Transactions</h2>
       <div className="rounded-lg shadow p-4">
         <div className="flex items-center justify-between py-4">
-          <Input placeholder="Search all columns..." className="max-w-sm" />
+          <Input
+            placeholder="Search all columns..."
+            className="max-w-sm"
+            value={globalFilter}
+            onChange={(e) => setGlobalFilter(e.target.value)}
+          />
           <AddAccountDialog />
         </div>
-        <DataTable columns={columns} data={transactions} />
+        <DataTable
+          columns={columns}
+          data={transactions}
+          globalFilter={globalFilter}
+          onGlobalFilterChange={setGlobalFilter}
+        />
       </div>
     </div>
   );

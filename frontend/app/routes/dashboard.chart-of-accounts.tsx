@@ -3,6 +3,7 @@ import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { ChartTable } from "~/components/accounts/chart-table";
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function loader({ request }: LoaderFunctionArgs) {
   const accounts = await import("../../public/CoA.json");
   return json({ accounts: accounts.default.Accounts });
