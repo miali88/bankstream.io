@@ -188,8 +188,6 @@ async def get_transactions(reference: str):
         logger.error(f"Error in get_transactions: {str(e)}")
         raise
 
-
-
 async def get_requisition_id(reference: str) -> str:
     logger.info(f"Looking up requisition ID for reference: {reference}")
     
