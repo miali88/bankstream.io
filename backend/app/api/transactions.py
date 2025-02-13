@@ -2,7 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from supabase import create_client, Client
 import os
 from dotenv import load_dotenv
-from .auth import verify_token
+
+from app.core.auth import get_current_user
 
 load_dotenv()
 
@@ -17,7 +18,7 @@ supabase: Client = create_client(
 @router.post("/")
 async def create_transaction(
     transaction_data: dict,
-    user_data: dict = Depends(verify_token)
+    user_data: dict = Depends(get_current_user)
 ):
     try:
         transaction_data["user_id"] = user_data.get("id")
@@ -30,7 +31,7 @@ async def create_transaction(
 
 
 @router.get("/")
-async def get_transactions():
+async def get_transactions(user_data: dict = Depends(get_current_user)):
     try:
         result = supabase.table("transactions")\
             .select("*")\
@@ -43,7 +44,7 @@ async def get_transactions():
 @router.get("/{transaction_id}")
 async def get_transaction(
     transaction_id: str,
-    user_data: dict = Depends(verify_token)
+    user_data: dict = Depends(get_current_user)
 ):
     try:
         result = supabase.table("transactions")\
@@ -60,7 +61,7 @@ async def get_transaction(
 async def update_transaction(
     transaction_id: str,
     transaction_data: dict,
-    user_data: dict = Depends(verify_token)
+    user_data: dict = Depends(get_current_user)
 ):
     try:
         result = supabase.table("transactions")\
@@ -75,7 +76,7 @@ async def update_transaction(
 @router.delete("/{transaction_id}")
 async def delete_transaction(
     transaction_id: str,
-    user_data: dict = Depends(verify_token)
+    user_data: dict = Depends(get_current_user)
 ):
     try:
         result = supabase.table("transactions")\

@@ -10,7 +10,6 @@ import { useSearchParams } from "@remix-run/react";
 import { useEffect } from "react";
 import { useToast } from "~/components/ui/use-toast";
 import { CheckCircle } from "lucide-react";
-import { useAuth } from "@clerk/remix";
 import { redirect } from "@remix-run/node";
 import { getAuth } from "@clerk/remix/ssr.server";
 

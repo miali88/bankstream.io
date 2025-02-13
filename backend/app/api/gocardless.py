@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from dotenv import load_dotenv
+
 from app.services import gocardless
-from app.api.clerk import get_current_user
+from app.core.auth import get_current_user
 
 load_dotenv()
 
