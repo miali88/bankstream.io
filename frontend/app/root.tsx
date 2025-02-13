@@ -31,27 +31,6 @@ export const links: LinksFunction = () => [
 
 export const loader: LoaderFunction = (args) => rootAuthLoader(args);
 
-export function Layout({ children }: { children: React.ReactNode }) {
-  return (
-    <html lang="en" className="dark">
-      <head>
-        <meta charSet="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <Meta />
-        <Links />
-      </head>
-      <body>
-        {children}
-        <Outlet />
-        <Toaster />
-        <ScrollRestoration />
-        <Scripts />
-        <LiveReload />
-      </body>
-    </html>
-  );
-}
-
 function App() {
   return (
     <html lang="en" className="dark">
@@ -63,8 +42,10 @@ function App() {
       </head>
       <body>
         <Outlet />
+        <Toaster />
         <ScrollRestoration />
         <Scripts />
+        <LiveReload />
       </body>
     </html>
   );

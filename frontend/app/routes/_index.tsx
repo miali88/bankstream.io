@@ -16,8 +16,11 @@ export default function Index() {
       <nav className="border-b">
         <div className=" flex w-full justify-between h-14 items-center px-4">
           <div className="mr-4 font-semibold">Bankstream</div>
-          <div>
+          <div className="flex items-center gap-2">
             <UserButton />
+            <Button asChild variant="outline">
+              <Link to="/sign-in">Sign In</Link>
+            </Button>
             <Button asChild variant="default">
               <Link to="/dashboard/transactions">Dashboard</Link>
             </Button>
