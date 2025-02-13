@@ -27,8 +27,6 @@ async def create_transaction(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
-
 @router.get("/")
 async def get_transactions(user_id: str = Depends(get_current_user)):
     try:
