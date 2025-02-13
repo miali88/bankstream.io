@@ -18,11 +18,9 @@ interface CountryData {
 }
 
 const ALLOWED_COUNTRIES: Record<string, string> = {
-  AU: "Australia",
   AT: "Austria",
   BE: "Belgium",
   BG: "Bulgaria",
-  CA: "Canada",
   HR: "Croatia",
   CY: "Cyprus",
   CZ: "Czech Republic",
@@ -35,7 +33,6 @@ const ALLOWED_COUNTRIES: Record<string, string> = {
   LU: "Luxembourg",
   MT: "Malta",
   NL: "Netherlands",
-  NZ: "New Zealand",
   NO: "Norway",
   PL: "Poland",
   PT: "Portugal",
@@ -43,12 +40,9 @@ const ALLOWED_COUNTRIES: Record<string, string> = {
   RO: "Romania",
   SK: "Slovakia",
   SI: "Slovenia",
-  ZA: "South Africa",
   ES: "Spain",
   SE: "Sweden",
-  CH: "Switzerland",
   GB: "United Kingdom",
-  US: "United States",
 };
 
 export const clientLoader: LoaderFunction = async () => {
