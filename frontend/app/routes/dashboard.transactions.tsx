@@ -1,16 +1,15 @@
 /* eslint-disable import/no-unresolved */
 import { columns } from "../components/transactions/columns";
 import { DataTable } from "../components/transactions/data-table";
-import { mockTransactions } from "../components/transactions/mock-data";
 import { Input } from "~/components/ui/input";
 import { AddAccountDialog } from "~/components/transactions/add-account-dialog";
 import type { LoaderFunction, ActionFunction } from "@remix-run/node";
 import { getBankList, getBuildLink } from "~/api/transactions";
-import { useSearchParams } from "@remix-run/react";
+import { useSearchParams, useLoaderData } from "@remix-run/react";
 import { useEffect } from "react";
 import { useToast } from "~/components/ui/use-toast";
 import { CheckCircle } from "lucide-react";
-import { redirect } from "@remix-run/node";
+import { redirect, json } from "@remix-run/node";
 import { getAuth } from "@clerk/remix/ssr.server";
 
 interface CountryData {
@@ -47,6 +46,18 @@ const ALLOWED_COUNTRIES: Record<string, string> = {
   GB: "United Kingdom",
 };
 
+interface Transaction {
+  id: string;
+  user_id: string;
+  creditor_name: string | null;
+  debtor_name: string | null;
+  amount: number;
+  currency: string;
+  remittance_info: string;
+  code: string;
+  created_at: string;
+}
+
 export const loader: LoaderFunction = async (args) => {
   const { userId, getToken } = await getAuth(args);
   
@@ -56,22 +67,51 @@ export const loader: LoaderFunction = async (args) => {
 
   const token = await getToken();
   
-  // Fetch countries data from an API
-  const response = await fetch("https://restcountries.com/v3.1/all");
-  const data = await response.json();
-
-  const countries = data
-    .filter((country: CountryData) => ALLOWED_COUNTRIES[country.cca2])
-    .map((country: CountryData) => ({
-      code: country.cca2,
-      name: ALLOWED_COUNTRIES[country.cca2],
-      flag: country.flag,
-    }))
-    .sort((a: { name: string }, b: { name: string }) =>
-      a.name.localeCompare(b.name)
+  try {
+    const transactionsResponse = await fetch(
+      `${process.env.VITE_API_BASE_URL}/transactions`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
     );
 
-  return { countries, token };
+    if (!transactionsResponse.ok) {
+      throw new Error('Failed to fetch transactions');
+    }
+
+    const transactions: Transaction[] = await transactionsResponse.json();
+
+    // Fetch countries data from API (existing code)
+    const response = await fetch("https://restcountries.com/v3.1/all");
+    const data = await response.json();
+
+    const countries = data
+      .filter((country: CountryData) => ALLOWED_COUNTRIES[country.cca2])
+      .map((country: CountryData) => ({
+        code: country.cca2,
+        name: ALLOWED_COUNTRIES[country.cca2],
+        flag: country.flag,
+      }))
+      .sort((a: { name: string }, b: { name: string }) =>
+        a.name.localeCompare(b.name)
+      );
+
+    return json({
+      countries,
+      token,
+      transactions: transactions || [],
+    });
+  } catch (error) {
+    console.error('Error fetching transactions:', error);
+    return json({ 
+      countries: [],
+      token,
+      transactions: [],
+      error: 'Failed to fetch transactions' 
+    });
+  }
 };
 
 export const action: ActionFunction = async (args) => {
@@ -108,6 +148,7 @@ export const action: ActionFunction = async (args) => {
 export default function Transactions() {
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
+  const { transactions } = useLoaderData<typeof loader>();
 
   useEffect(() => {
     if (searchParams.get("trx") === "succeed") {
@@ -135,7 +176,7 @@ export default function Transactions() {
           <Input placeholder="Search all columns..." className="max-w-sm" />
           <AddAccountDialog />
         </div>
-        <DataTable columns={columns} data={mockTransactions} />
+        <DataTable columns={columns} data={transactions} />
       </div>
     </div>
   );

@@ -32,14 +32,12 @@ async def get_jwks():
             return _jwks_cache
             
         jwks_url = f"{CLERK_JWT_ISSUER}/.well-known/jwks.json"
-        logger.info(f"Fetching JWKS from: {jwks_url}")
         
         async with httpx.AsyncClient() as client:
             response = await client.get(jwks_url)
             response.raise_for_status()
             
             _jwks_cache = response.json()
-            logger.info(f"Successfully fetched JWKS with {len(_jwks_cache.get('keys', []))} keys")
             return _jwks_cache
             
     except Exception as e:
@@ -53,12 +51,10 @@ async def get_current_user(
     """
     try:
         token = credentials.credentials
-        logger.info("Received token for verification")
         
         # Decode header without verification to get the key ID
         try:
             header = jwt.get_unverified_header(token)
-            logger.info(f"Token header decoded, kid: {header.get('kid')}")
         except Exception as e:
             logger.error(f"Error decoding token header: {str(e)}")
             raise HTTPException(status_code=401, detail="Invalid token header")

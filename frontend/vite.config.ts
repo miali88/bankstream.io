@@ -22,8 +22,16 @@ export default defineConfig({
     tsconfigPaths(),
   ],
   server: {
+    port: 5173,
+    hmr: {
+      port: 5173,
+      overlay: true,
+      protocol: 'ws',
+    },
     allowedHosts: [
-      'internally-wise-spaniel.eu.ngrok.io'
+      'internally-wise-spaniel.eu.ngrok.io',
+      'localhost',
+      '127.0.0.1'
     ],
   },
 });

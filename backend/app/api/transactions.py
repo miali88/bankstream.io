@@ -29,13 +29,12 @@ async def create_transaction(
 
 
 
-
 @router.get("/")
-async def get_transactions(user_data: dict = Depends(get_current_user)):
+async def get_transactions(user_id: str = Depends(get_current_user)):
     try:
-        result = supabase.table("transactions")\
+        result = supabase.table("gocardless_transactions")\
             .select("*")\
-            .eq("user_id", user_data.get("id"))\
+            .eq("user_id", user_id)\
             .execute()
         return result.data
     except Exception as e:
