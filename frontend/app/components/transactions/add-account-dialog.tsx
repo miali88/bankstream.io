@@ -14,7 +14,7 @@ import {
   useActionData,
   useSubmit,
 } from "@remix-run/react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Spinner } from "~/components/ui/spinner";
 
 import { Monitor, Smartphone } from "lucide-react";
@@ -37,14 +37,15 @@ interface BankInfo {
 
 export function AddAccountDialog() {
   const { countries } = useLoaderData<{ countries: CountryOption[] }>();
-  const actionData = useActionData<{ bankList?: BankInfo[]; link?: string }>();
+  const actionData = useActionData<{ bankList?: BankInfo[]; link?: string; ref?: string }>();
   const [selectedCountry, setSelectedCountry] = useState<string>("");
   const [selectedBank, setSelectedBank] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [step, setStep] = useState<"country" | "banks" | "link">("country");
+  const [showQR, setShowQR] = useState(false);
+  const [currentRef, setCurrentRef] = useState<string>("");
   const navigation = useNavigation();
   const submit = useSubmit();
-  const [showQR, setShowQR] = useState(false);
 
   const resetStates = () => {
     setSelectedCountry("");
@@ -52,6 +53,7 @@ export function AddAccountDialog() {
     setSearchTerm("");
     setStep("country");
     setShowQR(false);
+    setCurrentRef("");
   };
 
   const handleNext = () => {
@@ -71,6 +73,13 @@ export function AddAccountDialog() {
   const isLoading = navigation.state === "submitting";
   const bankList = actionData?.bankList || [];
   const link = actionData?.link;
+  const ref = actionData?.ref;
+
+  useEffect(() => {
+    if (ref) {
+      setCurrentRef(ref);
+    }
+  }, [ref]);
 
   const filteredBanks = bankList.filter((bank) =>
     bank.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -218,7 +227,7 @@ export function AddAccountDialog() {
                 <div className="space-y-4">
                   {!showQR ? (
                     <>
-                      <BankLinkSSEListener />
+                      <BankLinkSSEListener ref={currentRef} />
                       <div className="space-y-4">
                         <h3 className="text-lg font-semibold text-center">
                           Choose how to login

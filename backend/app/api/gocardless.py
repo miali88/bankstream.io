@@ -14,7 +14,7 @@ load_dotenv()
 
 router = APIRouter()
 
-# Store active SSE connections
+# Store active SSE connections by ref instead of user_id
 active_sse_connections: Dict[str, asyncio.Queue] = {}
 
 class BankListResponse(BaseModel):
@@ -39,77 +39,77 @@ async def build_bank_link(institution_id: str, user_id: str = Depends(get_curren
                           medium: str = "online"):
     print(f"\n /build_link called by user {user_id}")
     try:
-        link = await gocardless.build_link(institution_id, user_id, medium)
-        return {"link": link}
+        link, ref = await gocardless.build_link(institution_id, user_id, medium)
+        return {"link": link, "ref": ref}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/sse")
-async def sse_endpoint(request: Request, token: str = Query(...)):
+async def sse_endpoint(request: Request, ref: str = Query(...)):
     try:
-        # Verify the token
-        print(f"\n SSE connection attempt with token prefix: {token[:20]}...")
-        credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token.replace("Bearer ", ""))
-        user_id = await get_current_user(credentials)
-        print(f"SSE connection authenticated for user: {user_id}")
+        print(f"SSE connection attempt for ref: {ref}")
         
-        # Create a queue for this user
+        # Create a queue for this ref
         queue = asyncio.Queue()
-        active_sse_connections[user_id] = queue
-        print(f"Created SSE queue for user: {user_id}")
+        active_sse_connections[ref] = queue
+        print(f"Created SSE queue for ref: {ref}")
 
         async def event_generator():
             try:
-                print(f"Starting event generator for user: {user_id}")
+                print(f"Starting event generator for ref: {ref}")
                 while True:
                     if await request.is_disconnected():
-                        print(f"SSE connection disconnected for user: {user_id}")
+                        print(f"SSE connection disconnected for ref: {ref}")
                         break
 
                     try:
                         # Wait for messages with a timeout
                         message = await asyncio.wait_for(queue.get(), timeout=30)
-                        print(f"Sending SSE message to user {user_id}: {message}")
+                        print(f"Sending SSE message for ref {ref}: {message}")
                         yield message
                     except asyncio.TimeoutError:
                         # Send keepalive comment
-                        print(f"Sending keepalive to user: {user_id[:10]}...")
+                        print(f"Sending keepalive for ref: {ref}")
                         yield ": keepalive\n\n"
             except Exception as e:
-                print(f"SSE Error for user {user_id}: {str(e)}")
+                print(f"SSE Error for ref {ref}: {str(e)}")
             finally:
-                print(f"Cleaning up SSE connection for user: {user_id}")
-                active_sse_connections.pop(user_id, None)
+                print(f"Cleaning up SSE connection for ref: {ref}")
+                active_sse_connections.pop(ref, None)
 
         return EventSourceResponse(event_generator())
     except Exception as e:
         print(f"SSE connection failed: {str(e)}")
-        raise HTTPException(status_code=401, detail="Unauthorized")
+        raise HTTPException(status_code=400, detail="Bad Request")
 
 """ step 3, redirect user to our site, fetch transactions for new accounts added """
 @router.get("/callback")
-async def callback(ref: str, user_id: str = Depends(get_current_user)):
-    print(f"\n /callback called by user {user_id}")
-    result = await gocardless.get_transactions(ref, user_id)
-    
-    # Send SSE notification if user has an active connection
-    if user_id in active_sse_connections:
-        try:
-            print(f"Sending account_linked notification to user: {user_id}")
-            queue = active_sse_connections[user_id]
-            await queue.put({
-                "event": "message",
-                "data": {
-                    "type": "account_linked",
-                    "message": "Bank account successfully linked!"
-                }
-            })
-            print(f"Successfully sent account_linked notification to user: {user_id}")
-        except Exception as e:
-            print(f"Error sending SSE notification: {str(e)}")
-    else:
-        print(f"No active SSE connection found for user: {user_id}")
-    
-    return result
+async def add_account_callback(ref: str):
+    print(f"\n /callback called with ref: {ref}")
+    try:
+        result = await gocardless.add_account(ref)
+        
+        # Send SSE notification if we have an active connection for this ref
+        if ref in active_sse_connections:
+            try:
+                print(f"Sending account_linked notification for ref: {ref}")
+                queue = active_sse_connections[ref]
+                await queue.put({
+                    "event": "message",
+                    "data": {
+                        "type": "account_linked",
+                        "message": "Bank account successfully linked!"
+                    }
+                })
+                print(f"Successfully sent account_linked notification for ref: {ref}")
+            except Exception as e:
+                print(f"Error sending SSE notification: {str(e)}")
+        else:
+            print(f"No active SSE connection found for ref: {ref}")
+        
+        return result
+    except Exception as e:
+        print(f"Error in callback: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
     

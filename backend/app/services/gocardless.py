@@ -3,10 +3,11 @@ import requests
 from dotenv import load_dotenv
 import random
 import logging
+import uuid  # Add UUID import
 
 from app.services.supabase import get_supabase
 from app.services.sample_data import sample_transactions
-
+import json
 load_dotenv()
 
 # Set up logging
@@ -126,7 +127,7 @@ async def build_link(institution_id: str, user_id: str = None,
             'user_id': user_id
         })
 
-        return requisition_result['link']  # Return just the link URL
+        return requisition_result['link'], random_id 
     except Exception as e:
         logger.error(f"Failed to build link: {str(e)}")
         raise
@@ -154,17 +155,20 @@ async def store_requisition_data(requisition_data: dict):
         logger.error(f"Failed to store link data: {str(e)}")
         raise
 
+
 """ Step 4 """
-async def get_transactions(reference: str, user_id: str):
-    logger.info(f"Starting transaction retrieval for reference: {reference}")
+async def add_account(reference: str):
+    logger.info(f"Starting account addition process for reference: {reference}")
     try:
+        # Get necessary tokens and IDs
         access_token = await get_access_token()
         access_token = access_token['access']
-        logger.debug("Successfully obtained access token for transactions")
+        logger.debug("Successfully obtained access token")
 
         requisition_id = await get_requisition_id(reference)
+        user_id = await get_user_id_from_reference(reference)
 
-        """ ONCE USER HAS BEEN REDIRECTED TO OUR SITE, WE CAN FETCH THEIR ACCOUNTS """
+        # Fetch requisition details to get accounts
         url = f"https://bankaccountdata.gocardless.com/api/v2/requisitions/{requisition_id}"
         headers = {
             "accept": "application/json",
@@ -174,51 +178,59 @@ async def get_transactions(reference: str, user_id: str):
         requisition_response.raise_for_status()
         requisition_response = requisition_response.json()
 
-        """ THEN LOOP THROUGH ACCOUNTS LIST AND GET TRANSACTIONS FOR EACH ACCOUNT """
+        # Get accounts and fetch their transactions
         accounts = requisition_response['accounts']
         logger.info(f"Found {len(accounts)} accounts for requisition")
-        logger.info(f"Accounts: {accounts}")
+        
+        # Get transactions for all accounts
+        transactions = await get_transactions(accounts, access_token)
+        with open('transactions.json', 'w') as f:
+            json.dump(transactions, f)
+            
+        # Transform and store the transactions
+        transformed_transactions = transform_transactions(transactions['transactions']['booked'])
+        with open('transformed_transactions.json', 'w') as f:
+            json.dump(transformed_transactions, f)
+        await store_transactions(transformed_transactions, user_id)
+        
+        logger.info("Successfully completed account addition and transaction retrieval")
+        return transactions
+    except Exception as e:
+        logger.error(f"Error in add_account: {str(e)}")
+        raise
+
+async def get_transactions(accounts: list, access_token: str) -> dict:
+    """Fetch transactions for a list of accounts."""
+    logger.info(f"Starting transaction retrieval for {len(accounts)} accounts")
+    try:
+        all_transactions = {
+            'transactions': {
+                'booked': []
+            }
+        }
         
         for i, account in enumerate(accounts, 1):
             logger.info(f"Fetching transactions for account {i} of {len(accounts)}")
             logger.info(f"Account: {account}")
             url = f"https://bankaccountdata.gocardless.com/api/v2/accounts/{account}/transactions/"
 
+            headers = {
+                "accept": "application/json",
+                "Authorization": f"Bearer {access_token}"
+            }
             accounts_transactions = requests.get(url, headers=headers)
             accounts_transactions.raise_for_status()
             accounts_transactions: dict = accounts_transactions.json()
-
-        # accounts_transactions = sample_transactions
-
-        transformed_transactions: list = transform_transactions(accounts_transactions['transactions']['booked'])
-        await store_transactions(transformed_transactions, user_id)
-        logger.debug(f"Successfully retrieved transactions for account {i}")
-        
-        logger.info("Completed transaction retrieval and storage")
+            
+            # Aggregate transactions from this account
+            if 'transactions' in accounts_transactions and 'booked' in accounts_transactions['transactions']:
+                all_transactions['transactions']['booked'].extend(accounts_transactions['transactions']['booked'])
+            
+        logger.info(f"Retrieved a total of {len(all_transactions['transactions']['booked'])} transactions across all accounts")
+        return all_transactions
     except Exception as e:
-        logger.error(f"Error in get_transactions: {str(e)}")
+        logger.error(f"Error fetching transactions: {str(e)}")
         raise
-
-async def get_requisition_id(reference: str) -> str:
-    logger.info(f"Looking up requisition ID for reference: {reference}")
-    
-    if reference in link_data_cache:
-        logger.debug("Found requisition ID in cache")
-        return link_data_cache[reference]['id']
-    
-    logger.debug("Requisition ID not in cache, querying database")
-    supabase = await get_supabase()
-    result = await supabase.table('gocardless_agreements').select('id').eq('reference', reference).execute()
-    
-    if result.data and len(result.data) > 0:
-        requisition_id = result.data[0]['id']
-        # Store in cache for future use
-        link_data_cache[reference] = result.data[0]
-        logger.debug("Found requisition ID in database")
-        return requisition_id
-    
-    logger.error(f"No requisition found for reference: {reference}")
-    raise ValueError(f"No requisition found for reference: {reference}")
 
 def transform_transactions(transactions: list) -> list:
     logger.debug(f"Transforming {len(transactions)} transactions")
@@ -231,6 +243,10 @@ def transform_transactions(transactions: list) -> list:
             # Handle different possible transaction amount structures
             amount = 0
             currency = 'GBP'  # default currency
+            
+            # Get both transaction IDs
+            gc_transaction_id = transaction.get('transactionId')
+            internal_transaction_id = transaction.get('internalTransactionId')
             
             if 'transactionAmount' in transaction:
                 amount_data = transaction['transactionAmount']
@@ -248,9 +264,11 @@ def transform_transactions(transactions: list) -> list:
                 logger.warning(f"Could not convert amount '{amount_str}' to integer")
                 amount = 0
             
-            # Create transformed transaction
+            # Create transformed transaction with concatenated UUIDs as primary key and both transaction IDs
             transformed_transaction = {
-                'transactionId': transaction.get('transactionId'),
+                'id': f"{str(uuid.uuid4())}{str(uuid.uuid4())}",  # Generate concatenated UUIDs as primary key
+                'transaction_id': gc_transaction_id,  # GoCardless transaction ID
+                'internal_transaction_id': internal_transaction_id,  # Internal transaction ID
                 'currency': currency,
                 'amount': amount,
                 'creditorName': transaction.get('creditorName'),
@@ -281,7 +299,9 @@ async def store_transactions(transactions: dict, user_id: str):
     formatted_transactions = []
     for transaction in transactions:
         formatted_transaction = {
-            'id': transaction.get('transactionId'),
+            'id': transaction['id'],  # UUID primary key
+            'transaction_id': transaction.get('transaction_id'),
+            'internal_transaction_id': transaction.get('internal_transaction_id'),
             'user_id': user_id,
             'creditor_name': transaction.get('creditorName'),
             'debtor_name': transaction.get('debtorName'),
@@ -299,3 +319,45 @@ async def store_transactions(transactions: dict, user_id: str):
     except Exception as e:
         logger.error(f"Failed to store transactions: {str(e)}")
         raise
+
+
+async def get_user_id_from_reference(reference: str) -> str:
+    logger.info(f"Fetching user ID for reference: {reference}")
+    
+    if reference in link_data_cache and link_data_cache[reference].get('user_id'):
+        logger.debug("Found user ID in cache")
+        return link_data_cache[reference]['user_id']
+    
+    logger.debug("User ID not in cache, querying database")
+    supabase = await get_supabase()
+    result = await supabase.table('gocardless_agreements').select('user_id').eq('reference', reference).execute()
+    
+    if result.data and len(result.data) > 0 and result.data[0]['user_id']:
+        user_id = result.data[0]['user_id']
+        logger.debug(f"Found user ID in database: {user_id}")
+        return user_id
+    
+    logger.error(f"No user ID found for reference: {reference}")
+    raise ValueError(f"No user ID found for reference: {reference}")
+
+async def get_requisition_id(reference: str) -> str:
+    logger.info(f"Looking up requisition ID for reference: {reference}")
+    
+    if reference in link_data_cache:
+        logger.debug("Found requisition ID in cache")
+        return link_data_cache[reference]['id']
+    
+    logger.debug("Requisition ID not in cache, querying database")
+    supabase = await get_supabase()
+    result = await supabase.table('gocardless_agreements').select('id').eq('reference', reference).execute()
+    
+    if result.data and len(result.data) > 0:
+        requisition_id = result.data[0]['id']
+        # Store in cache for future use
+        link_data_cache[reference] = result.data[0]
+        logger.debug("Found requisition ID in database")
+        return requisition_id
+    
+    logger.error(f"No requisition found for reference: {reference}")
+    raise ValueError(f"No requisition found for reference: {reference}")
+

@@ -1,6 +1,6 @@
 import { ColumnDef } from "@tanstack/react-table";
 
-import type { Transaction } from "~/routes/dashboard/dashboard.transactions";
+import type { Transaction } from "~/routes/dashboard.transactions";
 
 export const columns: ColumnDef<Transaction>[] = [
   {

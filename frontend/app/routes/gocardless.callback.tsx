@@ -1,18 +1,14 @@
 import { useEffect, useRef } from "react";
 import { useSearchParams } from "@remix-run/react";
-import { useAuth } from "@clerk/remix";
 
 export default function GocardlessCallback() {
     const [searchParams] = useSearchParams();
-    const { getToken } = useAuth();
     const processedRef = useRef(false);
     
     useEffect(() => {
         async function processCallback() {
-            // Prevent duplicate processing
             if (processedRef.current) return;
-            processedRef.current = true;
-
+            
             try {
                 const ref = searchParams.get('ref');
                 if (!ref) {
@@ -20,25 +16,28 @@ export default function GocardlessCallback() {
                     return;
                 }
 
-                const token = await getToken();
                 const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/gocardless/callback?ref=${ref}`, {
+                    method: 'GET',
                     headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
+                        'Accept': 'application/json',
+                    },
                 });
 
                 if (!response.ok) {
-                    console.error('Failed to process callback on backend');
+                    const errorData = await response.text();
+                    console.error('Failed to process callback:', response.status, errorData);
+                    return;
                 }
+
+                processedRef.current = true;
             } catch (error) {
                 console.error('Error processing callback:', error);
-                // Reset the ref if there's an error, allowing for retry
                 processedRef.current = false;
             }
         }
 
         processCallback();
-    }, [searchParams, getToken]);
+    }, [searchParams]);
 
     return (
       <div className="flex h-screen items-center justify-center bg-white relative">
@@ -49,8 +48,8 @@ export default function GocardlessCallback() {
           <h2 className="text-xl font-semibold text-green-800">
             Bank data successfully linked
           </h2>
-          <p className="text-black">User may now return to the dashboard and close this window</p>
+          <p className="text-black">You may now close this window and return to your dashboard</p>
         </div>
       </div>
     );
-  } 
+} 

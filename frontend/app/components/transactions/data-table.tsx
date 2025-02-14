@@ -4,6 +4,7 @@ import {
   getCoreRowModel,
   getFilteredRowModel,
   useReactTable,
+  getPaginationRowModel,
 } from "@tanstack/react-table";
 
 import {
@@ -15,11 +16,23 @@ import {
   TableRow,
 } from "../ui/table";
 
+import { Button } from "../ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+
+interface PaginationProps {
+  pageIndex: number;
+  pageSize: number;
+  pageCount: number;
+  totalRows: number;
+  onPageChange: (page: number) => void;
+}
+
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   globalFilter: string;
   onGlobalFilterChange: (value: string) => void;
+  pagination?: PaginationProps;
 }
 
 export function DataTable<TData, TValue>({
@@ -27,16 +40,24 @@ export function DataTable<TData, TValue>({
   data,
   globalFilter,
   onGlobalFilterChange,
+  pagination,
 }: DataTableProps<TData, TValue>) {
   const table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
     state: {
       globalFilter,
+      pagination: pagination ? {
+        pageIndex: pagination.pageIndex,
+        pageSize: pagination.pageSize,
+      } : undefined,
     },
     onGlobalFilterChange,
+    pageCount: pagination?.pageCount,
+    manualPagination: true,
   });
 
   return (
@@ -88,6 +109,33 @@ export function DataTable<TData, TValue>({
           </TableBody>
         </Table>
       </div>
+      {pagination && (
+        <div className="flex items-center justify-between px-2 py-4">
+          <div className="flex-1 text-sm text-muted-foreground">
+            Showing {pagination.pageIndex * pagination.pageSize + 1} to{" "}
+            {Math.min((pagination.pageIndex + 1) * pagination.pageSize, pagination.totalRows)} of{" "}
+            {pagination.totalRows} entries
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              className="h-8 w-8 p-0"
+              onClick={() => pagination.onPageChange(pagination.pageIndex)}
+              disabled={pagination.pageIndex === 0}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              className="h-8 w-8 p-0"
+              onClick={() => pagination.onPageChange(pagination.pageIndex + 2)}
+              disabled={pagination.pageIndex >= pagination.pageCount - 1}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
