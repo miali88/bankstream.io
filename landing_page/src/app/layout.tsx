@@ -1,6 +1,5 @@
 import { TailwindIndicator } from "@/components/tailwind-indicator";
 import { ThemeProvider } from "@/components/theme-provider";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { cn, constructMetadata } from "@/lib/utils";
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
@@ -11,7 +10,7 @@ export const viewport: Viewport = {
   colorScheme: "light",
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "white" },
-    { media: "(prefers-color-scheme: dark)", color: "black" },
+    { media: "(prefers-color-scheme: dark)", color: "white" },
   ],
 };
 
@@ -35,9 +34,9 @@ export default function RootLayout({
           attribute="class"
           defaultTheme="light"
           enableSystem={false}
+          forcedTheme="light"
         >
           {children}
-          <ThemeToggle />
           <TailwindIndicator />
         </ThemeProvider>
       </body>

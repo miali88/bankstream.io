@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from supabase import create_client, Client
 import os
 from dotenv import load_dotenv
@@ -28,13 +28,37 @@ async def create_transaction(
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/")
-async def get_transactions(user_id: str = Depends(get_current_user)):
+async def get_transactions(
+    user_id: str = Depends(get_current_user),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=10, ge=1, le=100)
+):
     try:
+        # Calculate offset
+        offset = (page - 1) * page_size
+
+        # Get total count
+        count_result = supabase.table("gocardless_transactions")\
+            .select("*", count="exact")\
+            .eq("user_id", user_id)\
+            .execute()
+        total_count = count_result.count
+
+        # Get paginated transactions
         result = supabase.table("gocardless_transactions")\
             .select("*")\
             .eq("user_id", user_id)\
+            .range(offset, offset + page_size - 1)\
+            .order("created_at", desc=True)\
             .execute()
-        return result.data
+
+        return {
+            "transactions": result.data,
+            "total_count": total_count,
+            "page": page,
+            "page_size": page_size,
+            "total_pages": -(-total_count // page_size)  # Ceiling division
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
