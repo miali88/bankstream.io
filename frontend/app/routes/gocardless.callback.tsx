@@ -1,13 +1,18 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useSearchParams } from "@remix-run/react";
 import { useAuth } from "@clerk/remix";
 
 export default function GocardlessCallback() {
     const [searchParams] = useSearchParams();
     const { getToken } = useAuth();
+    const processedRef = useRef(false);
     
     useEffect(() => {
         async function processCallback() {
+            // Prevent duplicate processing
+            if (processedRef.current) return;
+            processedRef.current = true;
+
             try {
                 const ref = searchParams.get('ref');
                 if (!ref) {
@@ -27,6 +32,8 @@ export default function GocardlessCallback() {
                 }
             } catch (error) {
                 console.error('Error processing callback:', error);
+                // Reset the ref if there's an error, allowing for retry
+                processedRef.current = false;
             }
         }
 

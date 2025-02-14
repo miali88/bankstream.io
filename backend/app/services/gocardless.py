@@ -5,6 +5,7 @@ import random
 import logging
 
 from app.services.supabase import get_supabase
+from app.services.sample_data import sample_transactions
 
 load_dotenv()
 
@@ -176,17 +177,23 @@ async def get_transactions(reference: str, user_id: str):
         """ THEN LOOP THROUGH ACCOUNTS LIST AND GET TRANSACTIONS FOR EACH ACCOUNT """
         accounts = requisition_response['accounts']
         logger.info(f"Found {len(accounts)} accounts for requisition")
-
+        logger.info(f"Accounts: {accounts}")
+        
         for i, account in enumerate(accounts, 1):
-            logger.debug(f"Fetching transactions for account {i} of {len(accounts)}")
+            logger.info(f"Fetching transactions for account {i} of {len(accounts)}")
+            logger.info(f"Account: {account}")
             url = f"https://bankaccountdata.gocardless.com/api/v2/accounts/{account}/transactions/"
+
             accounts_transactions = requests.get(url, headers=headers)
             accounts_transactions.raise_for_status()
-            accounts_transactions = accounts_transactions.json()
-            transformed_transactions = transform_transactions(accounts_transactions['transactions']['booked'])
-            await store_transactions(transformed_transactions, user_id)
-            logger.debug(f"Successfully retrieved transactions for account {i}")
-            
+            accounts_transactions: dict = accounts_transactions.json()
+
+        # accounts_transactions = sample_transactions
+
+        transformed_transactions: list = transform_transactions(accounts_transactions['transactions']['booked'])
+        await store_transactions(transformed_transactions, user_id)
+        logger.debug(f"Successfully retrieved transactions for account {i}")
+        
         logger.info("Completed transaction retrieval and storage")
     except Exception as e:
         logger.error(f"Error in get_transactions: {str(e)}")
@@ -216,29 +223,58 @@ async def get_requisition_id(reference: str) -> str:
 def transform_transactions(transactions: list) -> list:
     logger.debug(f"Transforming {len(transactions)} transactions")
     try:
+        transformed = []
         for transaction in transactions:
-            # Extract currency and amount from transactionAmount
-            currency = transaction['transactionAmount']['currency']
-            # Convert amount to integer (assuming amount is a string like "10.50")
-            amount_str = transaction['transactionAmount']['amount']
-            # Remove decimal point and convert to integer (e.g., "10.50" becomes 1050)
-            amount = int(float(amount_str) * 100)
+            # Log the transaction structure for debugging
+            logger.debug(f"Transaction structure: {transaction}")
             
-            # Add new fields
-            transaction['currency'] = currency
-            transaction['amount'] = amount
+            # Handle different possible transaction amount structures
+            amount = 0
+            currency = 'GBP'  # default currency
             
-            # Remove original transactionAmount field
-            del transaction['transactionAmount']
+            if 'transactionAmount' in transaction:
+                amount_data = transaction['transactionAmount']
+                currency = amount_data.get('currency', 'GBP')
+                amount_str = amount_data.get('amount', '0')
+            else:
+                # Handle alternative structure where amount might be directly in transaction
+                amount_str = transaction.get('amount', '0')
+                currency = transaction.get('currency', 'GBP')
+            
+            # Convert amount to integer (cents)
+            try:
+                amount = int(float(amount_str) * 100)
+            except (ValueError, TypeError):
+                logger.warning(f"Could not convert amount '{amount_str}' to integer")
+                amount = 0
+            
+            # Create transformed transaction
+            transformed_transaction = {
+                'transactionId': transaction.get('transactionId'),
+                'currency': currency,
+                'amount': amount,
+                'creditorName': transaction.get('creditorName'),
+                'debtorName': transaction.get('debtorName'),
+                'remittanceInformationUnstructured': transaction.get('remittanceInformationUnstructured'),
+                'proprietaryBankTransactionCode': transaction.get('proprietaryBankTransactionCode')
+            }
+            
+            transformed.append(transformed_transaction)
         
         logger.debug("Transaction transformation completed successfully")
-        return transactions
+        return transformed
     except Exception as e:
         logger.error(f"Error transforming transactions: {str(e)}")
         raise
 
 async def store_transactions(transactions: dict, user_id: str):
     logger.info(f"Storing {len(transactions)} transactions in Supabase")
+    
+    # Don't proceed if there are no transactions to store
+    if not transactions:
+        logger.info("No transactions to store, skipping database insert")
+        return None
+        
     supabase = await get_supabase()
     
     # Map the transaction fields to match database schema
@@ -256,6 +292,10 @@ async def store_transactions(transactions: dict, user_id: str):
         }
         formatted_transactions.append(formatted_transaction)
 
-    result = await supabase.table('gocardless_transactions').insert(formatted_transactions).execute()
-    logger.info(f"Successfully stored {len(formatted_transactions)} transactions")
-    return result
+    try:
+        result = await supabase.table('gocardless_transactions').insert(formatted_transactions).execute()
+        logger.info(f"Successfully stored {len(formatted_transactions)} transactions")
+        return result
+    except Exception as e:
+        logger.error(f"Failed to store transactions: {str(e)}")
+        raise
