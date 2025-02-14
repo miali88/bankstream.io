@@ -22,8 +22,8 @@ export async function getBankList(country: string, token: string) {
   return await response.json();
 }
 
-export async function getBuildLink(institutionId: string, token: string) {
-  const searchParams = new URLSearchParams({ institution_id: institutionId });
+export async function getBuildLink(institutionId: string, transactionTotalDays: string, token: string) {
+  const searchParams = new URLSearchParams({ institution_id: institutionId, transaction_total_days: transactionTotalDays });
   const url = buildUrl("gocardless/build_link", searchParams);
 
   const response = await fetch(url, {

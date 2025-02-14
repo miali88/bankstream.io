@@ -64,8 +64,12 @@ export function AddAccountDialog() {
   };
 
   const handleGetLink = () => {
+    const selectedBankInfo = bankList.find(bank => bank.id === selectedBank);
+    if (!selectedBankInfo) return;
+    
     const formData = new FormData();
     formData.append("bankId", selectedBank);
+    formData.append("transactionTotalDays", selectedBankInfo.transaction_total_days);
     submit(formData, { method: "post" });
     setStep("link");
   };
@@ -227,7 +231,7 @@ export function AddAccountDialog() {
                 <div className="space-y-4">
                   {!showQR ? (
                     <>
-                      <BankLinkSSEListener ref={currentRef} />
+                      <BankLinkSSEListener referenceId={currentRef} />
                       <div className="space-y-4">
                         <h3 className="text-lg font-semibold text-center">
                           Choose how to login
