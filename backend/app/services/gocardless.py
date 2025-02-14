@@ -14,6 +14,8 @@ logger = logging.getLogger(__name__)
 ''' STEP 1 - ACCESS TOKEN '''
 # GoCardless OAuth endpoint for obtaining access tokens
 AUTH_URL = 'https://bankaccountdata.gocardless.com/api/v2/token/new/'
+FRONTEND_URL = os.getenv('FRONTEND_URL')
+BASE_API_URL = os.getenv('BASE_API_URL')
 
 # In-memory cache for link data
 link_data_cache = {}
@@ -64,7 +66,9 @@ async def fetch_list_of_banks(country: str = "GB"):
         raise
 
 """ Step 2 """
-async def build_link(institution_id: str, user_id: str = None) -> str:
+async def build_link(institution_id: str, user_id: str = None,
+                     medium: str = "online"
+                     ) -> str:
     logger.info(f"Building link for institution_id: {institution_id}, user_id: {user_id}")
     try:
         access_token = await get_access_token()
@@ -99,7 +103,7 @@ async def build_link(institution_id: str, user_id: str = None) -> str:
         
         requisition_url = "https://bankaccountdata.gocardless.com/api/v2/requisitions/"
         requisition_data = {
-            "redirect": "http://localhost:3001/app",
+            "redirect": f"{FRONTEND_URL}/gocardless/callback",
             "institution_id": institution_id,
             "reference": random_id,
             "agreement": agreement_result['id'],
@@ -150,7 +154,7 @@ async def store_requisition_data(requisition_data: dict):
         raise
 
 """ Step 4 """
-async def get_transactions(reference: str):
+async def get_transactions(reference: str, user_id: str):
     logger.info(f"Starting transaction retrieval for reference: {reference}")
     try:
         access_token = await get_access_token()
@@ -180,7 +184,7 @@ async def get_transactions(reference: str):
             accounts_transactions.raise_for_status()
             accounts_transactions = accounts_transactions.json()
             transformed_transactions = transform_transactions(accounts_transactions['transactions']['booked'])
-            await store_transactions(transformed_transactions)
+            await store_transactions(transformed_transactions, user_id)
             logger.debug(f"Successfully retrieved transactions for account {i}")
             
         logger.info("Completed transaction retrieval and storage")
@@ -233,7 +237,7 @@ def transform_transactions(transactions: list) -> list:
         logger.error(f"Error transforming transactions: {str(e)}")
         raise
 
-async def store_transactions(transactions: dict):
+async def store_transactions(transactions: dict, user_id: str):
     logger.info(f"Storing {len(transactions)} transactions in Supabase")
     supabase = await get_supabase()
     
@@ -242,7 +246,7 @@ async def store_transactions(transactions: dict):
     for transaction in transactions:
         formatted_transaction = {
             'id': transaction.get('transactionId'),
-            'user_id': "USER_ID_HERE",
+            'user_id': user_id,
             'creditor_name': transaction.get('creditorName'),
             'debtor_name': transaction.get('debtorName'),
             'amount': transaction.get('amount'),

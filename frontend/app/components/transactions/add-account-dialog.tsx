@@ -19,6 +19,7 @@ import { Spinner } from "~/components/ui/spinner";
 
 import { Monitor, Smartphone } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
+import { BankLinkSSEListener } from "./bank-link-sse-listener";
 
 interface CountryOption {
   code: string;
@@ -39,6 +40,7 @@ export function AddAccountDialog() {
   const actionData = useActionData<{ bankList?: BankInfo[]; link?: string }>();
   const [selectedCountry, setSelectedCountry] = useState<string>("");
   const [selectedBank, setSelectedBank] = useState<string>("");
+  const [searchTerm, setSearchTerm] = useState<string>("");
   const [step, setStep] = useState<"country" | "banks" | "link">("country");
   const navigation = useNavigation();
   const submit = useSubmit();
@@ -47,6 +49,7 @@ export function AddAccountDialog() {
   const resetStates = () => {
     setSelectedCountry("");
     setSelectedBank("");
+    setSearchTerm("");
     setStep("country");
     setShowQR(false);
   };
@@ -69,12 +72,16 @@ export function AddAccountDialog() {
   const bankList = actionData?.bankList || [];
   const link = actionData?.link;
 
+  const filteredBanks = bankList.filter((bank) =>
+    bank.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <Dialog onOpenChange={(open) => !open && resetStates()}>
       <DialogTrigger asChild>
         <Button>Add bank link</Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] sm:max-h-[85vh]">
         <DialogHeader>
           <DialogTitle>Add Bank Account</DialogTitle>
         </DialogHeader>
@@ -141,11 +148,18 @@ export function AddAccountDialog() {
                   <label htmlFor="bank-list" className="text-sm font-medium">
                     Select Bank
                   </label>
+                  <input
+                    type="text"
+                    placeholder="Search..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full px-3 py-2 border rounded-md text-sm"
+                  />
                   <div
                     id="bank-list"
-                    className="border rounded-md p-4 max-h-[300px] overflow-y-auto space-y-4"
+                    className="border rounded-md p-4 max-h-[400px] overflow-y-auto space-y-4"
                   >
-                    {bankList.map((bank) => (
+                    {filteredBanks.map((bank) => (
                       <div
                         key={bank.id}
                         className="flex items-center space-x-3"
@@ -204,26 +218,32 @@ export function AddAccountDialog() {
                 <div className="space-y-4">
                   {!showQR ? (
                     <>
-                      <div className="flex justify-center gap-8">
-                        <Button
-                          type="button"
-                          onClick={() => window.open(link, "_blank")}
-                          className="flex flex-col items-center gap-3 p-8"
-                        >
-                          <Monitor className="h-12 w-12" />
-                          <span>Open in Browser</span>
-                        </Button>
-                        <Button
-                          type="button"
-                          onClick={() => setShowQR(true)}
-                          className="flex flex-col items-center gap-3 p-8"
-                        >
-                          <Smartphone className="h-12 w-12" />
-                          <span>Open on Phone</span>
-                        </Button>
+                      <BankLinkSSEListener />
+                      <div className="space-y-4">
+                        <h3 className="text-lg font-semibold text-center">
+                          Choose how to login
+                        </h3>
+                        <div className="flex justify-center gap-8">
+                          <Button
+                            type="button"
+                            onClick={() => window.open(link, "_blank")}
+                            className="flex flex-col items-center gap-3 p-8"
+                          >
+                            <Monitor className="h-12 w-12" />
+                            <span>Online Banking</span>
+                          </Button>
+                          <Button
+                            type="button"
+                            onClick={() => setShowQR(true)}
+                            className="flex flex-col items-center gap-3 p-8"
+                          >
+                            <Smartphone className="h-12 w-12" />
+                            <span>Mobile Banking</span>
+                          </Button>
+                        </div>
                       </div>
                       <div className="rounded-lg border p-3">
-                        <p className="text-sm font-medium">Link:</p>
+                        <p className="text-sm font-medium">Shareable link:</p>
                         <p className="mt-1 break-all text-xs text-muted-foreground">
                           {link}
                         </p>

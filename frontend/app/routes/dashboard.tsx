@@ -9,6 +9,12 @@ import { redirect } from "@remix-run/node";
 import type { LoaderFunction } from "@remix-run/node";
 import { UserButton } from "@clerk/remix";
 
+declare global {
+  interface ImportMetaEnv {
+    VITE_API_BASE_URL: string;
+  }
+}
+
 export const ssr = false;
 
 export const loader: LoaderFunction = async (args) => {
