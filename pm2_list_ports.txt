@@ -1,0 +1,1 @@
+pm2 jlist | jq -r '.[] | "\(.name): \(.pm2_env.PORT)"'

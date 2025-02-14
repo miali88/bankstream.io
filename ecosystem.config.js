@@ -1,14 +1,14 @@
 module.exports = {
     apps: [
       {
-        name: "landing_page",
+        name: "bank-landing",
         script: "npm",
         args: "run start",
         watch: false,
         cwd: "./landing_page",  
         env: {
           NODE_ENV: "production",
-          PORT: 3000
+          PORT: 3001
         }
       },
       {
@@ -28,7 +28,7 @@ module.exports = {
         cwd: "./frontend",
         env: {
           NODE_ENV: "development",
-          PORT: 5173 
+          PORT: 5190
         }
       },
     ]

@@ -22,16 +22,17 @@ export default defineConfig({
     tsconfigPaths(),
   ],
   server: {
-    port: 5173,
+    port: 5190,
     hmr: {
-      port: 5173,
+      port: 5190,
       overlay: true,
       protocol: 'ws',
     },
     allowedHosts: [
       'internally-wise-spaniel.eu.ngrok.io',
       'localhost',
-      '127.0.0.1'
+      '127.0.0.1',
+      'bankstream.io'
     ],
   },
 });
