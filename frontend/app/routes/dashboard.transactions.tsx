@@ -124,14 +124,20 @@ export const action: ActionFunction = async (args) => {
   const bankIdValue = formData.get("bankId");
 
   try {
-    if (countryValue) {
-      const bankList = await getBankList(String(countryValue), token);
+    if (countryValue && typeof countryValue === 'string') {
+      const bankList = await getBankList(countryValue, token);
       return { bankList };
     }
 
-    if (bankIdValue) {
-      const { link } = await getBuildLink(String(bankIdValue), token);
-      return { link };
+    if (bankIdValue && typeof bankIdValue === 'string') {
+      const transactionTotalDays = formData.get("transactionTotalDays");
+      
+      if (!transactionTotalDays || typeof transactionTotalDays !== 'string') {
+        throw new Error("Missing transaction total days");
+      }
+      
+      const { link, ref } = await getBuildLink(bankIdValue, transactionTotalDays, token);
+      return { link, ref };
     }
 
     throw new Error("Invalid form data provided");

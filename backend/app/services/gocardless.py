@@ -68,8 +68,8 @@ async def fetch_list_of_banks(country: str = "GB"):
         raise
 
 """ Step 2 """
-async def build_link(institution_id: str, user_id: str = None,
-                     medium: str = "online"
+async def build_link(institution_id: str, transaction_total_days: str,
+                     user_id: str = None, medium: str = "online"
                      ) -> str:
     logger.info(f"Building link for institution_id: {institution_id}, user_id: {user_id}")
     try:
@@ -86,7 +86,7 @@ async def build_link(institution_id: str, user_id: str = None,
 
         data = {
             "institution_id": institution_id,  # Use the provided institution_id
-            "max_historical_days": "730",
+            "max_historical_days": transaction_total_days,
             "access_valid_for_days": "30",
             "access_scope": ["balances", "details", "transactions"]
         }

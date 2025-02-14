@@ -39,7 +39,7 @@ function App() {
         <Meta />
         <Links />
       </head>
-      <body className="min-h-full">
+      <body suppressHydrationWarning={true} className="min-h-full">
         <Outlet />
         <Toaster />
         <ScrollRestoration />

@@ -1,6 +1,5 @@
 import { ColumnDef } from "@tanstack/react-table";
-
-import type { Transaction } from "~/routes/dashboard.transactions";
+import type { Transaction } from "~/types/TransactionDataResponse";
 
 export const columns: ColumnDef<Transaction>[] = [
   {
@@ -38,7 +37,11 @@ export const columns: ColumnDef<Transaction>[] = [
     accessorKey: "created_at",
     header: "Date",
     cell: ({ row }) => {
-      return new Date(row.getValue("created_at")).toLocaleDateString();
+      return new Date(row.getValue("created_at")).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      });
     },
   },
 ];

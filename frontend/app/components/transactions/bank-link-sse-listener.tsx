@@ -2,21 +2,21 @@ import { useEffect } from "react";
 import { useToast } from "~/components/ui/use-toast";
 
 interface BankLinkSSEListenerProps {
-  ref: string;
+  referenceId: string;
 }
 
-export function BankLinkSSEListener({ ref }: BankLinkSSEListenerProps) {
+export function BankLinkSSEListener({ referenceId }: BankLinkSSEListenerProps) {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (!ref) {
-      console.log('No ref available, skipping SSE setup');
+    if (!referenceId) {
+      console.log('No referenceId available, skipping SSE setup');
       return;
     }
 
-    console.log('Setting up SSE connection for ref:', ref);
+    console.log('Setting up SSE connection for referenceId:', referenceId);
     const setupEventSource = () => {
-      const sseUrl = `${import.meta.env.VITE_API_BASE_URL}/gocardless/sse?ref=${encodeURIComponent(ref)}`;
+      const sseUrl = `${import.meta.env.VITE_API_BASE_URL}/gocardless/sse?ref=${encodeURIComponent(referenceId)}`;
       console.log('Connecting to SSE endpoint:', sseUrl);
       
       const eventSource = new EventSource(sseUrl);
@@ -68,7 +68,7 @@ export function BankLinkSSEListener({ ref }: BankLinkSSEListenerProps) {
       console.log('Cleaning up SSE connection');
       eventSource.close();
     };
-  }, [ref, toast]);
+  }, [referenceId, toast]);
 
   return null;
 } 

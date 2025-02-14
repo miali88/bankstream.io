@@ -35,14 +35,15 @@ async def get_list_of_banks(country: str, user_id: str = Depends(get_current_use
 
 """ step 2, we build a link to the chosen bank, and return the link for user to approve our access """
 @router.get("/build_link")
-async def build_bank_link(institution_id: str, user_id: str = Depends(get_current_user),
-                          medium: str = "online"):
+async def build_bank_link(institution_id: str, transaction_total_days: str,
+                          user_id: str = Depends(get_current_user), medium: str = "online"):
     print(f"\n /build_link called by user {user_id}")
     try:
-        link, ref = await gocardless.build_link(institution_id, user_id, medium)
+        link, ref = await gocardless.build_link(institution_id, transaction_total_days, user_id, medium)
         return {"link": link, "ref": ref}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.get("/sse")
 async def sse_endpoint(request: Request, ref: str = Query(...)):
@@ -81,6 +82,7 @@ async def sse_endpoint(request: Request, ref: str = Query(...)):
     except Exception as e:
         print(f"SSE connection failed: {str(e)}")
         raise HTTPException(status_code=400, detail="Bad Request")
+
 
 """ step 3, redirect user to our site, fetch transactions for new accounts added """
 @router.get("/callback")
