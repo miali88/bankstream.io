@@ -11,6 +11,7 @@ import { useToast } from "~/components/ui/use-toast";
 import { CheckCircle } from "lucide-react";
 import { redirect, json } from "@remix-run/node";
 import { getAuth } from "@clerk/remix/ssr.server";
+import type { Transaction, TransactionDataResponse } from "~/types/TransactionDataResponse";
 
 interface CountryData {
   cca2: string;
@@ -46,18 +47,6 @@ const ALLOWED_COUNTRIES: Record<string, string> = {
   GB: "United Kingdom",
 };
 
-export interface Transaction {
-  id: string;
-  user_id: string;
-  creditor_name: string | null;
-  debtor_name: string | null;
-  amount: number;
-  currency: string;
-  remittance_info: string;
-  code: string;
-  created_at: string;
-}
-
 export const loader: LoaderFunction = async (args) => {
   const { userId, getToken } = await getAuth(args);
 
@@ -66,10 +55,13 @@ export const loader: LoaderFunction = async (args) => {
   }
 
   const token = await getToken();
+  const url = new URL(args.request.url);
+  const page = url.searchParams.get("page") || "1";
+  const pageSize = url.searchParams.get("pageSize") || "10";
 
   try {
     const transactionsResponse = await fetch(
-      `${process.env.VITE_API_BASE_URL}/transactions`,
+      `${process.env.VITE_API_BASE_URL}/transactions?page=${page}&page_size=${pageSize}`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -81,9 +73,9 @@ export const loader: LoaderFunction = async (args) => {
       throw new Error("Failed to fetch transactions");
     }
 
-    const transactions: Transaction[] = await transactionsResponse.json();
+    const transactionData: TransactionDataResponse = await transactionsResponse.json();
 
-    // Fetch countries data from API (existing code)
+    // Fetch countries data from API
     const response = await fetch("https://restcountries.com/v3.1/all");
     const data = await response.json();
 
@@ -101,7 +93,7 @@ export const loader: LoaderFunction = async (args) => {
     return json({
       countries,
       token,
-      transactions: transactions || [],
+      ...transactionData,
     });
   } catch (error) {
     console.error("Error fetching transactions:", error);
@@ -109,6 +101,10 @@ export const loader: LoaderFunction = async (args) => {
       countries: [],
       token,
       transactions: [],
+      total_count: 0,
+      page: parseInt(page),
+      page_size: parseInt(pageSize),
+      total_pages: 0,
       error: "Failed to fetch transactions",
     });
   }
@@ -146,9 +142,9 @@ export const action: ActionFunction = async (args) => {
 };
 
 export default function Transactions() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { toast } = useToast();
-  const { transactions } = useLoaderData<typeof loader>();
+  const { transactions, page, page_size, total_pages, total_count } = useLoaderData<typeof loader>();
   const [globalFilter, setGlobalFilter] = useState("");
 
   useEffect(() => {
@@ -164,10 +160,17 @@ export default function Transactions() {
             </span>
           </div>
         ),
-        duration: 3000, // 3 seconds
+        duration: 3000,
       });
     }
   }, [searchParams, toast]);
+
+  const handlePageChange = (newPage: number) => {
+    setSearchParams(prev => {
+      prev.set("page", newPage.toString());
+      return prev;
+    });
+  };
 
   return (
     <div>
@@ -187,6 +190,13 @@ export default function Transactions() {
           data={transactions}
           globalFilter={globalFilter}
           onGlobalFilterChange={setGlobalFilter}
+          pagination={{
+            pageIndex: page - 1,
+            pageSize: page_size,
+            pageCount: total_pages,
+            totalRows: total_count,
+            onPageChange: handlePageChange,
+          }}
         />
       </div>
     </div>
