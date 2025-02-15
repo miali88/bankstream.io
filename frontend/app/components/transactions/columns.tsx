@@ -66,6 +66,9 @@ export const getColumns = ({ onTransactionChange, pendingChanges }: ColumnProps)
       const originalValue = row.getValue("chart_of_account") as string;
       const currentValue = pendingChanges[transactionId]?.chart_of_account || originalValue;
       
+      // Find the matching CoA option to display the code
+      const selectedAccount = coaOptions.find(option => option.value === currentValue);
+      
       return (
         <Select 
           value={currentValue}
@@ -74,7 +77,9 @@ export const getColumns = ({ onTransactionChange, pendingChanges }: ColumnProps)
           }}
         >
           <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder="Select CoA" />
+            <SelectValue>
+              {selectedAccount ? selectedAccount.label : "Select CoA"}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             {coaOptions.map((option) => (
