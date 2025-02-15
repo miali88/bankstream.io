@@ -1,42 +1,34 @@
-import { buildUrl } from "./config";
-
-export async function getBankList(country: string, token: string) {
-  const searchParams = new URLSearchParams({ country });
-  const url = buildUrl("gocardless/bank_list", searchParams);
-
-  const response = await fetch(url, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${token}`,
-    },
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => null);
-    throw new Error(
-      errorData?.detail || `HTTP error! status: ${response.status}`
-    );
-  }
-
-  return await response.json();
+export interface Transactions {
+    id: string;
+    user_id?: string;
+    creditor_name?: string;
+    debtor_name?: string;
+    amount?: number;
+    currency?: string;
+    remittance_info?: string;
+    code?: string;
+    created_at: Date;
+    institution_id?: string;
+    iban?: string;
+    transaction_id?: string;
+    internal_transaction_id?: string;
+    logo?: string;
+    category?: string;
+    chart_of_account?: string;
 }
 
-export async function getBuildLink(institutionId: string, transactionTotalDays: string, token: string) {
-  const searchParams = new URLSearchParams({ institution_id: institutionId, transaction_total_days: transactionTotalDays });
-  const url = buildUrl("gocardless/build_link", searchParams);
+export type TransactionCreate = Transactions;
+export type Transaction = Transactions;
 
-  const response = await fetch(url, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${token}`,
-    },
-  });
+export interface TransactionUpdate {
+    id: string;
+    category?: string;
+    chart_of_account?: string;
+    // Add other optional fields that can be updated
+}
 
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
-  }
-
-  return await response.json();
+export interface TransactionBatchUpdate {
+    transactions: TransactionUpdate[];
+    page?: number;
+    pageSize?: number;
 }

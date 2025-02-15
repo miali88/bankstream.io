@@ -1,7 +1,36 @@
 import { ColumnDef } from "@tanstack/react-table";
 import type { Transaction } from "~/types/TransactionDataResponse";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select";
+import coaData from "../../../public/CoA.json";
 
-export const columns: ColumnDef<Transaction>[] = [
+// Get COA options from the JSON file
+const coaOptions = coaData.Accounts.map(account => ({
+  value: account.AccountID,
+  label: `${account.Code || ''} - ${account.Name}`,
+  type: account.Type
+}));
+
+// Category options
+const categoryOptions = [
+  { value: "income", label: "Income" },
+  { value: "expense", label: "Expense" },
+  { value: "transfer", label: "Transfer" },
+  { value: "investment", label: "Investment" },
+  { value: "other", label: "Other" }
+];
+
+interface ColumnProps {
+  onTransactionChange?: (transactionId: string, field: string, value: string) => void;
+  pendingChanges: Record<string, Record<string, string>>;
+}
+
+export const getColumns = ({ onTransactionChange, pendingChanges }: ColumnProps): ColumnDef<Transaction>[] => [
   {
     accessorKey: "creditor_name",
     header: "Creditor",
@@ -30,8 +59,62 @@ export const columns: ColumnDef<Transaction>[] = [
     header: "Description",
   },
   {
-    accessorKey: "code",
-    header: "Code",
+    accessorKey: "chart_of_account",
+    header: "CoA",
+    cell: ({ row }) => {
+      const transactionId = row.original.id;
+      const originalValue = row.getValue("chart_of_account") as string;
+      const currentValue = pendingChanges[transactionId]?.chart_of_account || originalValue;
+      
+      return (
+        <Select 
+          value={currentValue}
+          onValueChange={(value) => {
+            onTransactionChange?.(transactionId, "chart_of_account", value);
+          }}
+        >
+          <SelectTrigger className="w-[200px]">
+            <SelectValue placeholder="Select CoA" />
+          </SelectTrigger>
+          <SelectContent>
+            {coaOptions.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      );
+    },
+  },
+  {
+    accessorKey: "category",
+    header: "Category",
+    cell: ({ row }) => {
+      const transactionId = row.original.id;
+      const originalValue = row.getValue("category") as string;
+      const currentValue = pendingChanges[transactionId]?.category || originalValue;
+      
+      return (
+        <Select 
+          value={currentValue}
+          onValueChange={(value) => {
+            onTransactionChange?.(transactionId, "category", value);
+          }}
+        >
+          <SelectTrigger className="w-[150px]">
+            <SelectValue placeholder="Select Category" />
+          </SelectTrigger>
+          <SelectContent>
+            {categoryOptions.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      );
+    },
   },
   {
     accessorKey: "created_at",
@@ -45,3 +128,6 @@ export const columns: ColumnDef<Transaction>[] = [
     },
   },
 ];
+
+// Export a default columns instance for backward compatibility
+export const columns = getColumns({ pendingChanges: {} });

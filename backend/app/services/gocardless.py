@@ -266,7 +266,7 @@ def transform_transactions(transactions: list) -> list:
             
             # Create transformed transaction with concatenated UUIDs as primary key and both transaction IDs
             transformed_transaction = {
-                'id': f"{str(uuid.uuid4())}{str(uuid.uuid4())}",  # Generate concatenated UUIDs as primary key
+                'id': f"{str(uuid.uuid4())}-{str(uuid.uuid4())}",  # Generate concatenated UUIDs as primary key
                 'transaction_id': gc_transaction_id,  # GoCardless transaction ID
                 'internal_transaction_id': internal_transaction_id,  # Internal transaction ID
                 'currency': currency,

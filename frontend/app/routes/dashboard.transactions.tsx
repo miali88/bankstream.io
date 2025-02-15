@@ -1,14 +1,15 @@
 /* eslint-disable import/no-unresolved */
-import { columns } from "../components/transactions/columns";
+import { getColumns } from "../components/transactions/columns";
 import { DataTable } from "../components/transactions/data-table";
 import { Input } from "~/components/ui/input";
+import { Button } from "~/components/ui/button";
 import { AddAccountDialog } from "~/components/transactions/add-account-dialog";
 import type { LoaderFunction, ActionFunction } from "@remix-run/node";
-import { getBankList, getBuildLink } from "~/api/transactions";
-import { useSearchParams, useLoaderData } from "@remix-run/react";
+import { getBankList, getBuildLink } from "~/api/gocardless";
+import { useSearchParams, useLoaderData, useFetcher } from "@remix-run/react";
 import { useEffect, useState } from "react";
 import { useToast } from "~/components/ui/use-toast";
-import { CheckCircle } from "lucide-react";
+import { CheckCircle, Save } from "lucide-react";
 import { redirect, json } from "@remix-run/node";
 import { getAuth } from "@clerk/remix/ssr.server";
 import type { Transaction, TransactionDataResponse } from "~/types/TransactionDataResponse";
@@ -120,6 +121,42 @@ export const action: ActionFunction = async (args) => {
   const token = await getToken();
   const { request } = args;
   const formData = await request.formData();
+
+  // Handle transaction updates
+  if (formData.get("_action") === "updateTransactions") {
+    const updatesJson = formData.get("updates");
+    if (!updatesJson || typeof updatesJson !== 'string') {
+      throw new Error("No updates provided");
+    }
+
+    const updates = JSON.parse(updatesJson);
+    
+    try {
+      // Update transactions in batch
+      const response = await fetch(`${process.env.VITE_API_BASE_URL}/transactions/batch`, {
+        method: "PATCH",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updates),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || "Failed to update transactions");
+      }
+
+      return json({ success: true });
+    } catch (error: unknown) {
+      console.error("Error updating transactions:", error);
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error("Failed to update transactions");
+    }
+  }
+
   const countryValue = formData.get("country");
   const bankIdValue = formData.get("bankId");
 
@@ -130,13 +167,13 @@ export const action: ActionFunction = async (args) => {
     }
 
     if (bankIdValue && typeof bankIdValue === 'string') {
-      const transactionTotalDays = formData.get("transactionTotalDays");
+      const transactionTotalDaysValue = formData.get("transactionTotalDays");
       
-      if (!transactionTotalDays || typeof transactionTotalDays !== 'string') {
+      if (!transactionTotalDaysValue || typeof transactionTotalDaysValue !== 'string') {
         throw new Error("Missing transaction total days");
       }
       
-      const { link, ref } = await getBuildLink(bankIdValue, transactionTotalDays, token);
+      const { link, ref } = await getBuildLink(bankIdValue, transactionTotalDaysValue, token);
       return { link, ref };
     }
 
@@ -152,6 +189,8 @@ export default function Transactions() {
   const { toast } = useToast();
   const { transactions, page, page_size, total_pages, total_count } = useLoaderData<typeof loader>();
   const [globalFilter, setGlobalFilter] = useState("");
+  const [pendingChanges, setPendingChanges] = useState<Record<string, Record<string, string>>>({});
+  const fetcher = useFetcher();
 
   useEffect(() => {
     if (searchParams.get("trx") === "succeed") {
@@ -171,12 +210,85 @@ export default function Transactions() {
     }
   }, [searchParams, toast]);
 
+  const handleTransactionChange = (transactionId: string, field: string, value: string) => {
+    console.log('Transaction Change:', { transactionId, field, value });
+    setPendingChanges(prev => {
+      const newChanges = {
+        ...prev,
+        [transactionId]: {
+          ...(prev[transactionId] || {}),
+          [field]: value,
+        },
+      };
+      console.log('New Pending Changes:', newChanges);
+      return newChanges;
+    });
+  };
+
+  const handleSaveChanges = () => {
+    if (Object.keys(pendingChanges).length === 0) {
+      toast({
+        description: "No changes to save",
+        duration: 3000,
+      });
+      return;
+    }
+
+    const updates = Object.entries(pendingChanges).map(([transactionId, changes]) => ({
+      id: transactionId,
+      ...changes
+    }));
+
+    console.log('Sending updates:', {
+      transactions: updates,
+      page: page || 1,
+      pageSize: page_size || 10
+    });
+
+    const formData = new FormData();
+    formData.append("_action", "updateTransactions");
+    formData.append("updates", JSON.stringify({
+      transactions: updates,
+      page: page || 1,
+      pageSize: page_size || 10
+    }));
+
+    fetcher.submit(
+      formData,
+      { method: "patch" }
+    );
+
+    // Add response logging
+    console.log('Fetcher state:', fetcher.state);
+    console.log('Fetcher data:', fetcher.data);
+
+    // Clear pending changes after submission
+    setPendingChanges({});
+
+    toast({
+      variant: "default",
+      className: "bg-white border-green-500",
+      description: (
+        <div className="flex items-center gap-2 text-green-900">
+          <CheckCircle className="h-4 w-4" />
+          <span className="text-black">Changes saved successfully</span>
+        </div>
+      ),
+      duration: 3000,
+    });
+  };
+
   const handlePageChange = (newPage: number) => {
     setSearchParams(prev => {
       prev.set("page", newPage.toString());
       return prev;
     });
   };
+
+  const columns = getColumns({ 
+    onTransactionChange: handleTransactionChange,
+    pendingChanges: pendingChanges
+  });
 
   return (
     <div>
@@ -189,7 +301,21 @@ export default function Transactions() {
             value={globalFilter}
             onChange={(e) => setGlobalFilter(e.target.value)}
           />
-          <AddAccountDialog />
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              className="bg-green-100 text-black hover:bg-green-200"
+              onClick={handleSaveChanges}
+              disabled={Object.keys(pendingChanges).length === 0}
+            >
+              <Save className="w-4 h-4 mr-2" />
+              Save Changes
+            </Button>
+            <Button variant="outline" className="bg-purple-100 text-black hover:bg-purple-200">
+              Auto Reconcile ✨
+            </Button>
+            <AddAccountDialog />
+          </div>
         </div>
         <DataTable
           columns={columns}

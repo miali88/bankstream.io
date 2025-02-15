@@ -1,7 +1,7 @@
 /* eslint-disable import/no-unresolved */
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
-import { ChartTable } from "~/components/accounts/chart-table";
+import { ChartTable } from "~/components/chart-of-accounts/chart-table";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function loader({ request }: LoaderFunctionArgs) {
