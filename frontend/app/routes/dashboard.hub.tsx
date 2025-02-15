@@ -4,6 +4,7 @@ import { useLoaderData, useSearchParams } from '@remix-run/react';
 import type { LoaderFunction } from '@remix-run/node';
 import { getAuth } from "@clerk/remix/ssr.server";
 import type { TransactionDataResponse } from '~/types/TransactionDataResponse';
+import { config } from "~/config.server";
 
 // Mark this route as client-only
 export const handle = { hydrate: true };
@@ -22,7 +23,7 @@ export const loader: LoaderFunction = async (args) => {
 
   try {
     // Ensure trailing slash and handle redirects
-    const apiUrl = `${process.env.VITE_API_BASE_URL}/transactions/`;
+    const apiUrl = `${config.apiBaseUrl}/transactions/`;
     console.log('Fetching transactions from:', apiUrl);
 
     const response = await fetch(

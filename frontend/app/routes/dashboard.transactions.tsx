@@ -13,6 +13,7 @@ import { CheckCircle, Save } from "lucide-react";
 import { redirect, json } from "@remix-run/node";
 import { getAuth } from "@clerk/remix/ssr.server";
 import type { Transaction, TransactionDataResponse } from "~/types/TransactionDataResponse";
+import { config } from "~/config.server";
 
 interface CountryData {
   cca2: string;
@@ -48,6 +49,9 @@ const ALLOWED_COUNTRIES: Record<string, string> = {
   GB: "United Kingdom",
 };
 
+// Ensure we have an API URL
+const API_BASE_URL = config.apiBaseUrl || process.env.VITE_API_BASE_URL || 'http://localhost:8001/api/v1';
+
 export const loader: LoaderFunction = async (args) => {
   const { userId, getToken } = await getAuth(args);
 
@@ -61,8 +65,11 @@ export const loader: LoaderFunction = async (args) => {
   const pageSize = url.searchParams.get("pageSize") || "10";
 
   try {
+    const apiUrl = `${API_BASE_URL}/transactions?page=${page}&page_size=${pageSize}`;
+    console.log('Fetching transactions from:', apiUrl);
+    
     const transactionsResponse = await fetch(
-      `${process.env.VITE_API_BASE_URL}/transactions?page=${page}&page_size=${pageSize}`,
+      apiUrl,
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -71,10 +78,18 @@ export const loader: LoaderFunction = async (args) => {
     );
 
     if (!transactionsResponse.ok) {
-      throw new Error("Failed to fetch transactions");
+      const errorText = await transactionsResponse.text();
+      console.error("Failed to fetch transactions:", {
+        status: transactionsResponse.status,
+        statusText: transactionsResponse.statusText,
+        error: errorText,
+        url: transactionsResponse.url
+      });
+      throw new Error(`Failed to fetch transactions: ${transactionsResponse.status} ${transactionsResponse.statusText}`);
     }
 
     const transactionData: TransactionDataResponse = await transactionsResponse.json();
+    console.log('Received transaction data:', transactionData);
 
     // Fetch countries data from API
     const response = await fetch("https://restcountries.com/v3.1/all");
@@ -132,8 +147,11 @@ export const action: ActionFunction = async (args) => {
     const updates = JSON.parse(updatesJson);
     
     try {
-      // Update transactions in batch
-      const response = await fetch(`${process.env.VITE_API_BASE_URL}/transactions/batch`, {
+      // Use the API_BASE_URL constant instead of config.apiBaseUrl
+      const updateUrl = `${API_BASE_URL}/transactions/batch`;
+      console.log('Attempting to update transactions at:', updateUrl);
+      
+      const response = await fetch(updateUrl, {
         method: "PATCH",
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -144,10 +162,17 @@ export const action: ActionFunction = async (args) => {
 
       if (!response.ok) {
         const errorData = await response.json();
+        console.error("Failed to update transactions:", {
+          status: response.status,
+          url: response.url,
+          error: errorData
+        });
         throw new Error(errorData.detail || "Failed to update transactions");
       }
 
-      return json({ success: true });
+      const result = await response.json();
+      console.log('Update successful:', result);
+      return json({ success: true, data: result });
     } catch (error: unknown) {
       console.error("Error updating transactions:", error);
       if (error instanceof Error) {

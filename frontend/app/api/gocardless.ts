@@ -1,6 +1,8 @@
 import { buildUrl } from "./config";
 
-export async function getBankList(country: string, token: string) {
+export async function getBankList(country: string | null, token: string) {
+  if (!country) throw new Error("Country is required");
+  
   const searchParams = new URLSearchParams({ country });
   const url = buildUrl("gocardless/bank_list", searchParams);
 
@@ -22,7 +24,10 @@ export async function getBankList(country: string, token: string) {
   return await response.json();
 }
 
-export async function getBuildLink(institutionId: string, transactionTotalDays: string, token: string) {
+export async function getBuildLink(institutionId: string | null, transactionTotalDays: string | null, token: string) {
+  if (!institutionId) throw new Error("Institution ID is required");
+  if (!transactionTotalDays) throw new Error("Transaction total days is required");
+
   const searchParams = new URLSearchParams({ institution_id: institutionId, transaction_total_days: transactionTotalDays });
   const url = buildUrl("gocardless/build_link", searchParams);
 

@@ -2,11 +2,11 @@
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { ChartTable } from "~/components/chart-of-accounts/chart-table";
+import coaData from "../../public/CoA.json";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function loader({ request }: LoaderFunctionArgs) {
-  const accounts = await import("../../public/CoA.json");
-  return json({ accounts: accounts.default.Accounts });
+  return json({ accounts: coaData.Accounts });
 }
 
 export default function ChartOfAccounts() {
