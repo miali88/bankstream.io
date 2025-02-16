@@ -59,11 +59,6 @@ export const getColumns = ({ onTransactionChange, pendingChanges }: ColumnProps)
     header: "Description",
   },
   {
-    accessorKey: "bban",
-    header: "Account Number",
-    cell: ({ row }) => row.getValue("bban") || "N/A",
-  },
-  {
     accessorKey: "chart_of_account",
     header: "CoA",
     cell: ({ row }) => {
@@ -136,6 +131,11 @@ export const getColumns = ({ onTransactionChange, pendingChanges }: ColumnProps)
         day: '2-digit'
       });
     },
+  },
+  {
+    accessorKey: "bban",
+    header: "BBAN",
+    cell: ({ row }) => row.getValue("bban") || "N/A",
   },
 ];
 

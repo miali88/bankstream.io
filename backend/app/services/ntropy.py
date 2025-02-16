@@ -54,7 +54,12 @@ class NtropyService:
         if not api_key:
             raise ValueError("Ntropy API key not configured")
         self.sdk = SDK(api_key)
-        self.supabase = get_supabase()
+        self._supabase = None
+
+    async def get_supabase(self):
+        if not self._supabase:
+            self._supabase = await get_supabase()
+        return self._supabase
 
     async def enrich_transactions(self, transactions: List[TransactionsTable]) -> BatchCreateResponse:
         """
@@ -85,7 +90,8 @@ class NtropyService:
                 'status': 'completed'
             }
             
-            result = self.supabase.table('ntropy_transactions').insert(data).execute()
+            supabase = await self.get_supabase()
+            result = await supabase.table('ntropy_transactions').insert(data).execute()
             return result.data[0]
         except Exception as e:
             raise ValueError(f"Failed to store Ntropy transaction: {str(e)}")

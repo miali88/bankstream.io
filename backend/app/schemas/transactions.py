@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import Optional, List
 
 class TransactionsTable(BaseModel):
-    id: str = Field(..., max_length=36)
+    id: str = Field(..., max_length=100)
     user_id: Optional[str] = None
     creditor_name: Optional[str] = None
     debtor_name: Optional[str] = None

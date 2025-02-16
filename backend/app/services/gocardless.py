@@ -344,7 +344,7 @@ def transform_transactions(transactions: list) -> list:
         logger.error(f"Error transforming transactions: {str(e)}")
         raise
 
-async def store_transactions(transactions: dict, user_id: str):
+async def store_transactions(transactions: dict, user_id: str, agreement_id: str):
     logger.info(f"Storing {len(transactions)} transactions in Supabase")
     
     # Don't proceed if there are no transactions to store
@@ -369,7 +369,8 @@ async def store_transactions(transactions: dict, user_id: str):
             'remittance_info': transaction.get('remittanceInformationUnstructured'),
             'code': transaction.get('proprietaryBankTransactionCode'),
             'iban': transaction.get('iban'),
-            'institution_id': transaction.get('institution_id')
+            'institution_id': transaction.get('institution_id'),
+            'agreement_id': agreement_id
         }
         formatted_transactions.append(formatted_transaction)
 
