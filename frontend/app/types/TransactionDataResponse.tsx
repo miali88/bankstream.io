@@ -8,6 +8,14 @@ export interface Transaction {
     remittance_info?: string;
     code?: string;
     created_at: string;  // ISO date string
+    bban?: string;
+    institution_id?: string;
+    iban?: string;
+    transaction_id?: string;
+    internal_transaction_id?: string;
+    logo?: string;
+    category?: string;
+    chart_of_account?: string;
 }
 
 export interface TransactionDataResponse {

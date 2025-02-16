@@ -162,53 +162,7 @@ async def store_requisition_data(requisition_data: dict):
         logger.error(f"Failed to store link data: {str(e)}")
         raise
 
-
 """ Step 4 """
-async def get_account_details(account_id: str, access_token: str) -> dict:
-    """Fetch details for a single account."""
-    logger.info(f"Fetching details for account: {account_id}")
-    try:
-        url = f"https://bankaccountdata.gocardless.com/api/v2/accounts/{account_id}/"
-        headers = {
-            "accept": "application/json",
-            "Authorization": f"Bearer {access_token}"
-        }
-        response = requests.get(url, headers=headers)
-        response.raise_for_status()
-        account_details = response.json()
-        logger.info(f"Successfully retrieved details for account {account_id}")
-        return account_details
-    except Exception as e:
-        logger.error(f"Error fetching account details: {str(e)}")
-        raise
-
-async def store_account_details(account_details: dict, user_id: str):
-    """Store account details in the database."""
-    logger.info("Storing account details in Supabase")
-    try:
-        supabase = await get_supabase()
-        
-        account_data = {
-            'id': account_details.get('id'),
-            'user_id': user_id,
-            'institution_id': account_details.get('institutionId'),
-            'iban': account_details.get('iban'),
-            'bban': account_details.get('bban'),
-            'currency': account_details.get('currency'),
-            'owner_name': account_details.get('ownerName'),
-            'name': account_details.get('name'),
-            'product': account_details.get('product'),
-            'status': account_details.get('status'),
-            'bic': account_details.get('bic'),
-        }
-        
-        result = await supabase.table('gocardless_accounts').insert(account_data).execute()
-        logger.info(f"Successfully stored account details for account {account_details.get('id')}")
-        return result
-    except Exception as e:
-        logger.error(f"Failed to store account details: {str(e)}")
-        raise
-
 async def add_account(reference: str):
     logger.info(f"Starting account addition process for reference: {reference}")
     try:
@@ -236,8 +190,9 @@ async def add_account(reference: str):
         
         # Fetch and store account details for each account
         for account_id in accounts:
+            agreement_id = await requisition_response.get('agreement')
             account_details = await get_account_details(account_id, access_token)
-            await store_account_details(account_details, user_id)
+            await store_account_details(account_details, user_id, agreement_id)
         
         # Get transactions for all accounts
         transactions = await get_transactions(accounts, access_token)
@@ -263,6 +218,44 @@ async def add_account(reference: str):
         return transactions
     except Exception as e:
         logger.error(f"Error in add_account: {str(e)}")
+        raise
+
+async def get_account_details(account_id: str, access_token: str) -> dict:
+    """Fetch details for a single account."""
+    logger.info(f"Fetching details for account: {account_id}")
+    try:
+        url = f"https://bankaccountdata.gocardless.com/api/v2/accounts/{account_id}/"
+        headers = {
+            "accept": "application/json",
+            "Authorization": f"Bearer {access_token}"
+        }
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+        account_details = response.json()
+        logger.info(f"Successfully retrieved details for account {account_id}")
+        return account_details
+    except Exception as e:
+        logger.error(f"Error fetching account details: {str(e)}")
+        raise
+
+async def store_account_details(account_details: dict, user_id: str, agreement_id: str):
+    """Store account details in the database."""
+    logger.info("Storing account details in Supabase")
+    try:
+        supabase = await get_supabase()
+        
+        account_data = {
+            'id': account_details.get('id'),
+            'user_id': user_id,
+            'results': account_details,
+            'agreement_id': agreement_id
+        }
+        
+        result = await supabase.table('gocardless_accounts').insert(account_data).execute()
+        logger.info(f"Successfully stored account details for account {account_details.get('id')}")
+        return result
+    except Exception as e:
+        logger.error(f"Failed to store account details: {str(e)}")
         raise
 
 async def get_transactions(accounts: list, access_token: str) -> dict:
@@ -427,4 +420,5 @@ async def get_requisition_id(reference: str) -> str:
     
     logger.error(f"No requisition found for reference: {reference}")
     raise ValueError(f"No requisition found for reference: {reference}")
+
 

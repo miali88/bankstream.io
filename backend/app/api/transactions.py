@@ -7,6 +7,7 @@ import logging
 
 from app.services.supabase import get_supabase
 from app.core.auth import get_current_user
+from app.schemas.transactions import GetTransactions
 
 load_dotenv()
 
@@ -35,7 +36,7 @@ async def create_transaction(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/")
+@router.get("/", response_model=GetTransactions)
 async def get_transactions(
     user_id: str = Depends(get_current_user),
     page: int = Query(default=1, ge=1),

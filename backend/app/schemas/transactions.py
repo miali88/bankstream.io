@@ -14,6 +14,7 @@ class TransactionsTable(BaseModel):
     created_at: datetime
     institution_id: Optional[str] = None
     iban: Optional[str] = None
+    bban: Optional[str] = None
     transaction_id: Optional[str] = None
     internal_transaction_id: Optional[str] = None
     logo: Optional[str] = None
@@ -26,7 +27,7 @@ class TransactionsTable(BaseModel):
             datetime: lambda v: v.isoformat()
         }
 
-class TransactionsEndpoint(BaseModel):
+class GetTransactions(BaseModel):
     transactions: List[TransactionsTable]
     total_count: int
     page: int
