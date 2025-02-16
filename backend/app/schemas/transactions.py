@@ -20,6 +20,9 @@ class TransactionsTable(BaseModel):
     logo: Optional[str] = None
     category: Optional[str] = None
     chart_of_account: Optional[str] = None
+    category_id: Optional[str] = None
+    entity: Optional[str] = None
+
 
     class Config:
         from_attributes = True
