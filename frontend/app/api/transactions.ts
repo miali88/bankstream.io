@@ -1,99 +1,170 @@
+/* eslint-disable import/no-unresolved */
+import { TransactionDataResponse } from "~/types/TransactionDataResponse";
+import { buildUrl } from "./config";
+
 export interface Transactions {
-    id: string;
-    user_id?: string;
-    creditor_name?: string;
-    debtor_name?: string;
-    amount?: number;
-    currency?: string;
-    remittance_info?: string;
-    code?: string;
-    created_at: Date;
-    institution_id?: string;
-    iban?: string;
-    transaction_id?: string;
-    internal_transaction_id?: string;
-    logo?: string;
-    category?: string;
-    chart_of_account?: string;
+  id: string;
+  user_id?: string;
+  creditor_name?: string;
+  debtor_name?: string;
+  amount?: number;
+  currency?: string;
+  remittance_info?: string;
+  code?: string;
+  created_at: Date;
+  institution_id?: string;
+  iban?: string;
+  transaction_id?: string;
+  internal_transaction_id?: string;
+  logo?: string;
+  category?: string;
+  chart_of_account?: string;
 }
 
 export type TransactionCreate = Transactions;
 export type Transaction = Transactions;
 
 export interface TransactionUpdate {
-    id: string;
-    category?: string;
-    chart_of_account?: string;
-    // Add other optional fields that can be updated
+  id: string;
+  category?: string;
+  chart_of_account?: string;
+  // Add other optional fields that can be updated
 }
 
 export interface TransactionBatchUpdate {
-    transactions: TransactionUpdate[];
-    page?: number;
-    pageSize?: number;
+  transactions: TransactionUpdate[];
+  page?: number;
+  pageSize?: number;
 }
 
 export interface EnrichmentProgress {
-    status: string;
-    progress: number;
-    total: number;
+  status: string;
+  progress: number;
+  total: number;
 }
 
 export interface EnrichmentResult {
-    status: string;
-    results: any; // Replace with proper type from Ntropy response
+  status: string;
+  results: any; // Replace with proper type from Ntropy response
 }
 
 export interface EnrichmentError {
-    status?: string;
-    error: string;
+  status?: string;
+  error: string;
 }
 
-export async function enrichTransactions(transactions: Transaction[]): Promise<string> {
-    const response = await fetch('/api/ntropy/enrich', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(transactions),
+export interface BatchCreateResponse {
+  id: string;
+  operation: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  progress: number;
+  total: number;
+  request_id: string;
+}
+
+async function checkEnrichmentStatus(
+  token: string,
+  batchId: string,
+  signal?: AbortSignal
+): Promise<{ success: boolean }> {
+  const statusUrl = buildUrl(`ntropy/enrich/${batchId}/status`);
+  let enrichmentComplete = false;
+
+  while (!enrichmentComplete) {
+    const statusResponse = await fetch(statusUrl, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      signal,
     });
 
-    if (!response.ok) {
-        throw new Error('Failed to start enrichment process');
+    if (!statusResponse.ok) {
+      throw new Error("Failed to check enrichment status");
     }
 
-    const data = await response.json();
-    return data.id; // Return the batch ID
+    const status = await statusResponse.json();
+
+    if (status.status === "complete") {
+      enrichmentComplete = true;
+    } else if (status.status === "error") {
+      throw new Error(`Enrichment failed: ${status.error}`);
+    } else {
+      // Wait before checking again
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+  }
+
+  return { success: true };
 }
 
-export function subscribeToEnrichmentStatus(
-    batchId: string,
-    onProgress: (progress: EnrichmentProgress) => void,
-    onComplete: (result: EnrichmentResult) => void,
-    onError: (error: EnrichmentError) => void
-): () => void {
-    const eventSource = new EventSource(`/api/ntropy/enrich/${batchId}/status`);
+export async function getTransactions(
+  token: string,
+  page: string | number = 1,
+  pageSize: string | number = 10,
+  signal?: AbortSignal,
+  batchId?: string
+): Promise<TransactionDataResponse> {
+  if (batchId) {
+    // Check enrichment status if batchId is provided
+    const enrichResult = await checkEnrichmentStatus(token, batchId, signal);
+    if (!enrichResult.success) {
+      throw new Error("Enrichment status check failed");
+    }
+  }
 
-    eventSource.addEventListener('progress', (event) => {
-        const data = JSON.parse(event.data);
-        onProgress(data);
+  // Then fetch the transactions
+  const searchParams = new URLSearchParams({
+    page: page.toString(),
+    page_size: pageSize.toString(),
+  });
+
+  const url = buildUrl("transactions", searchParams);
+
+  const response = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    signal,
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error("Failed to fetch transactions:", {
+      status: response.status,
+      statusText: response.statusText,
+      error: errorText,
+      url: response.url,
     });
+    throw new Error(
+      `Failed to fetch transactions: ${response.status} ${response.statusText}`
+    );
+  }
 
-    eventSource.addEventListener('complete', (event) => {
-        const data = JSON.parse(event.data);
-        onComplete(data);
-        eventSource.close();
-    });
+  return response.json();
+}
 
-    eventSource.addEventListener('error', (event: Event) => {
-        const messageEvent = event as MessageEvent;
-        const data = messageEvent.data ? JSON.parse(messageEvent.data) : { error: 'Connection lost' };
-        onError(data);
-        eventSource.close();
-    });
+export async function startEnrichment(
+  token: string,
+  signal?: AbortSignal
+): Promise<BatchCreateResponse> {
+  const enrichUrl = buildUrl("ntropy/enrich");
+  const response = await fetch(enrichUrl, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    signal,
+  });
 
-    // Return cleanup function
-    return () => {
-        eventSource.close();
-    };
+  console.log(response, "TETTT");
+
+  if (!response.ok) {
+    throw new Error("Failed to start enrichment process");
+  }
+
+  return response.json();
 }
