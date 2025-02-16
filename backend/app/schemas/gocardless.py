@@ -14,3 +14,13 @@ class BankListResponse(BaseModel):
 
 class BuildLinkResponse(BaseModel):
     link: str
+
+class GCLAccountsResponse(BaseModel):
+    id: str
+    created: str
+    last_accessed: str
+    iban: str
+    bban: str
+    status: str
+    institution_id: str
+    owner_name: str

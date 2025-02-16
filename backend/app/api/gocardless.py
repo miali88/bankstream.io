@@ -1,12 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from fastapi.security import HTTPAuthorizationCredentials
-from sse_starlette.sse import EventSourceResponse
-from pydantic import BaseModel
+
 from dotenv import load_dotenv
 import asyncio
 from typing import Dict, List
-import logging
 from datetime import datetime
+
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from sse_starlette.sse import EventSourceResponse
+from pydantic import BaseModel
 
 from app.schemas.gocardless import BuildLinkResponse, BankListResponse
 from app.services import gocardless

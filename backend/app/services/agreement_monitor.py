@@ -31,23 +31,4 @@ async def get_expiring_agreements(days_threshold: int = 7):
         return result.data
     except Exception as e:
         logger.error(f"Error checking for expiring agreements: {str(e)}")
-        raise
-
-async def mark_agreement_notified(agreement_id: str):
-    """
-    Mark an agreement as having been notified about expiration
-    
-    Args:
-        agreement_id (str): The ID of the agreement that was notified
-    """
-    try:
-        supabase = await get_supabase()
-        
-        await supabase.table('gocardless_agreements')\
-            .update({'notification_sent': True})\
-            .eq('id', agreement_id)\
-            .execute()
-            
-    except Exception as e:
-        logger.error(f"Error marking agreement as notified: {str(e)}")
         raise 
