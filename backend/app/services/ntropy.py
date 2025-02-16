@@ -61,10 +61,39 @@ class NtropyService:
             self._supabase = await get_supabase()
         return self._supabase
 
-    async def enrich_transactions(self, transactions: List[TransactionsTable]) -> BatchCreateResponse:
+    async def get_user_transactions(self, user_id: str) -> List[TransactionsTable]:
         """
-        Enrich a list of transactions using Ntropy API
+        Fetch all transactions for a given user
+        
+        Args:
+            user_id (str): The ID of the user
+            
+        Returns:
+            List[TransactionsTable]: List of transactions for the user
         """
+        supabase = await self.get_supabase()
+        result = await supabase.table('transactions').select('*').eq('user_id', user_id).execute()
+        
+        if not result.data:
+            return []
+        
+        return [TransactionsTable(**tx) for tx in result.data]
+
+    async def enrich_transactions(self, user_id: str) -> BatchCreateResponse:
+        """
+        Enrich all transactions for a given user using Ntropy API
+        
+        Args:
+            user_id (str): The ID of the user
+            
+        Returns:
+            BatchCreateResponse: The batch creation response containing the batch ID
+        """
+        transactions = await self.get_user_transactions(user_id)
+        
+        if not transactions:
+            raise ValueError("No transactions found for the user")
+        
         ntropy_transactions = transform_transactions_for_ntropy(transactions)
         return self.sdk.batches.create(
             operation="POST /v3/transactions",
@@ -99,10 +128,17 @@ class NtropyService:
     async def get_batch_status(self, batch_id: str) -> dict:
         """
         Get the current status of a batch
+        
+        Args:
+            batch_id (str): The batch ID to check
+            
+        Returns:
+            dict: Status response containing status and progress information
         """
         batch = self.sdk.batches.get(id=batch_id)
         
         if batch.is_completed():
+            # Still get and store the results, but don't return them
             results = self.sdk.batches.results(id=batch_id)
             
             # Store each enriched transaction in Supabase
@@ -110,20 +146,19 @@ class NtropyService:
                 await self.store_ntropy_transaction(batch_id, transaction)
             
             return {
-                "event": "complete",
-                "data": {"status": batch.status, "results": results.model_dump()}
+                "status": "complete",
+                "progress": 100,
+                "total": batch.total
             }
         elif batch.is_error():
             return {
-                "event": "error",
-                "data": {"status": batch.status, "error": "Batch processing failed"}
+                "status": "error",
+                "progress": 0,
+                "error": "Batch processing failed"
             }
         else:
             return {
-                "event": "progress",
-                "data": {
-                    "status": batch.status,
-                    "progress": batch.progress,
-                    "total": batch.total
-                }
+                "status": "processing",
+                "progress": batch.progress,
+                "total": batch.total
             }

@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from datetime import datetime
-from typing import Literal
+from typing import Literal, Optional
 
 class EnrichedTransactionResponse(BaseModel):
     created_at: datetime
@@ -38,4 +38,10 @@ class BatchResultsResponse(BaseModel):
     status: str
     results: list[EnrichedTransactionResponse]
     request_id: str
+
+class BatchStatusResponse(BaseModel):
+    status: Literal["complete", "error", "processing"]
+    progress: int
+    total: Optional[int] = None
+    error: Optional[str] = None
 
