@@ -178,3 +178,4 @@ async def patch_transactions_batch(
     except Exception as e:
         logging.error(f"Batch update failed with error: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e)) 
+    
