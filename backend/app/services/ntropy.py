@@ -1,8 +1,7 @@
 from typing import List
 
-from app.models.transactions import TransactionsTable
-from app.api.ntropy import EnrichedTransactionRequest
-
+from app.schemas.transactions import TransactionsTable
+from app.schemas.ntropy import EnrichedTransactionRequest
 
 def transform_transactions_for_ntropy(transactions: List[TransactionsTable]) -> List[EnrichedTransactionRequest]:
     """

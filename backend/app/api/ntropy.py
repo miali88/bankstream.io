@@ -1,12 +1,13 @@
-from typing import List, Optional, Literal
+from typing import List
 import os
-from datetime import datetime
+import asyncio
+from sse_starlette.sse import EventSourceResponse
 
-from pydantic import BaseModel
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from ntropy_sdk import SDK
 
-from app.models.transactions import TransactionsTable
+from app.schemas.transactions import TransactionsTable
+from app.schemas.ntropy import BatchCreateResponse, BatchResultsResponse
 from app.services.ntropy import transform_transactions_for_ntropy
 
 router = APIRouter()
@@ -14,39 +15,7 @@ router = APIRouter()
 # Environment variables
 NTROPY_API_KEY = os.getenv("NTROPY_API_KEY")
 
-
-class EnrichedTransactionResponse(BaseModel):
-    created_at: datetime
-    id: str
-    entities: dict
-    categories: dict
-    location: dict
-
-class EnrichedTransactionRequest(BaseModel):
-    id: str
-    description: str
-    date: str
-    amount: float
-    entry_type: str
-    currency: str
-    account_holder_id: str | None = None
-    location: dict | None = None
-
-class BatchCreateData(BaseModel):
-    operation: Literal["POST /v3/transactions"]
-    data: list[EnrichedTransactionRequest]
-
-class BatchCreateResponse(BaseModel):
-    id: str
-    operation: str
-    status: str
-    created_at: datetime
-    updated_at: datetime
-    progress: int
-    total: int
-    request_id: str
-
-@router.post("/enrich", request_model=List[TransactionsTable])
+@router.post("/enrich", response_model=BatchCreateResponse)
 async def enrich_transactions(transactions: List[TransactionsTable]):
     """
     Endpoint to enrich a list of transactions using Ntropy API
@@ -54,6 +23,8 @@ async def enrich_transactions(transactions: List[TransactionsTable]):
     Args:
         transactions (List[TransactionsTable]): List of transaction objects to be enriched
         
+    Returns:
+        BatchCreateResponse: The batch creation response containing the batch ID
     """
     if not NTROPY_API_KEY:
         raise HTTPException(status_code=500, detail="Ntropy API key not configured")
@@ -62,9 +33,72 @@ async def enrich_transactions(transactions: List[TransactionsTable]):
 
     ntropy_transactions: list = transform_transactions_for_ntropy(transactions)
 
-    r = ntropy_sdk.batches.create(
+    r: BatchCreateResponse = ntropy_sdk.batches.create(
         operation="POST /v3/transactions",
         data=ntropy_transactions
     )
 
-    return {"result": "posted to ntropy, await batch completion"}
+    return r
+
+@router.get("/enrich/{batch_id}/status")
+async def get_batch_status(request: Request, batch_id: str):
+    """
+    SSE endpoint to stream batch processing status
+    
+    Args:
+        request (Request): The FastAPI request object
+        batch_id (str): The batch ID to monitor
+        
+    Returns:
+        EventSourceResponse: SSE response with batch status updates
+    """
+    if not NTROPY_API_KEY:
+        raise HTTPException(status_code=500, detail="Ntropy API key not configured")
+
+    ntropy_sdk = SDK(NTROPY_API_KEY)
+
+    async def event_generator():
+        while True:
+            if await request.is_disconnected():
+                break
+
+            try:
+                # Get batch status
+                batch = ntropy_sdk.batches.get(id=batch_id)
+                
+                # If batch is completed, get results and send final event
+                if batch.is_completed():
+                    results: BatchResultsResponse = ntropy_sdk.batches.results(id=batch_id)
+                    yield {
+                        "event": "complete",
+                        "data": {"status": batch.status, "results": results.dict()}
+                    }
+                    break
+                # If batch encountered an error, send error event and stop
+                elif batch.is_error():
+                    yield {
+                        "event": "error",
+                        "data": {"status": batch.status, "error": "Batch processing failed"}
+                    }
+                    break
+                # Otherwise send progress update
+                else:
+                    yield {
+                        "event": "progress",
+                        "data": {
+                            "status": batch.status,
+                            "progress": batch.progress,
+                            "total": batch.total
+                        }
+                    }
+                
+                await asyncio.sleep(5)  # Poll every 5 seconds
+                
+            except Exception as e:
+                yield {
+                    "event": "error",
+                    "data": {"error": str(e)}
+                }
+                break
+
+    return EventSourceResponse(event_generator())
