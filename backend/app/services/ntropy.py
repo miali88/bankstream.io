@@ -77,6 +77,7 @@ class NtropyService:
                        .select('*')
                        .eq('user_id', user_id)
                        .or_('ntropy_enrich.is.null,ntropy_enrich.eq.false')
+                       .limit(10)  # Limit to 10 transactions during development
                        .execute())
         
         if not result.data:

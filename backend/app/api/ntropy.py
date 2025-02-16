@@ -13,15 +13,22 @@ router = APIRouter()
 ntropy_service = NtropyService(os.getenv("NTROPY_API_KEY"))
 
 @router.post("/enrich", response_model=BatchCreateResponse)
-async def enrich_transactions(user_data: dict = Depends(get_current_user)):
+async def enrich_transactions(
+    limit: int = None,
+    user_data: dict = Depends(get_current_user)
+):
     """
     Endpoint to enrich all transactions for the authenticated user using Ntropy API
+    
+    Args:
+        limit (int, optional): Maximum number of transactions to process. If None, processes all transactions.
+        user_data (dict): The authenticated user's data
             
     Returns:
         BatchCreateResponse: The batch creation response containing the batch ID
     """
     try:
-        return await ntropy_service.enrich_transactions(user_data.get("id"))
+        return await ntropy_service.enrich_transactions(user_data.get("id"), limit=limit)
     except ValueError as e:
         raise HTTPException(status_code=500, detail=str(e))
 

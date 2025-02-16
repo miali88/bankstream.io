@@ -39,6 +39,7 @@ class TransactionService:
         result = await (supabase.table('gocardless_transactions')
             .select('*, ntropy_transactions(enriched_data)', count='exact')
             .eq('user_id', user_id)
+            .eq('ntropy_enrich', True)
             .order('created_at', desc=True)
             .range(offset, offset + page_size - 1)
             .execute())
@@ -49,7 +50,7 @@ class TransactionService:
         # Process the results to extract only entities and categories
         for tx in result.data:
             ntropy_data = tx.pop('ntropy_transactions', [])
-            if ntropy_data and len(ntropy_data) > 0 and tx.get('ntropy_enrich'):
+            if ntropy_data and len(ntropy_data) > 0:
                 enriched_data = ntropy_data[0].get('enriched_data', {})
                 tx['entities'] = enriched_data.get('entities')
                 tx['categories'] = enriched_data.get('categories')
