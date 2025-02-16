@@ -1,7 +1,11 @@
 from typing import List
 
+from ntropy_sdk import SDK
+from app.services.supabase import get_supabase
+
 from app.schemas.transactions import TransactionsTable
 from app.schemas.ntropy import EnrichedTransactionRequest
+from app.schemas.ntropy import BatchCreateResponse
 
 def transform_transactions_for_ntropy(transactions: List[TransactionsTable]) -> List[EnrichedTransactionRequest]:
     """
@@ -44,3 +48,76 @@ def transform_transactions_for_ntropy(transactions: List[TransactionsTable]) -> 
         transformed_transactions.append(transformed_tx)
     
     return transformed_transactions
+
+class NtropyService:
+    def __init__(self, api_key: str):
+        if not api_key:
+            raise ValueError("Ntropy API key not configured")
+        self.sdk = SDK(api_key)
+        self.supabase = get_supabase()
+
+    async def enrich_transactions(self, transactions: List[TransactionsTable]) -> BatchCreateResponse:
+        """
+        Enrich a list of transactions using Ntropy API
+        """
+        ntropy_transactions = transform_transactions_for_ntropy(transactions)
+        return self.sdk.batches.create(
+            operation="POST /v3/transactions",
+            data=ntropy_transactions
+        )
+
+    async def store_ntropy_transaction(self, batch_id: str, transaction_data: dict) -> dict:
+        """
+        Store Ntropy transaction data in Supabase
+        
+        Args:
+            batch_id (str): The Ntropy batch ID
+            transaction_data (dict): The enriched transaction data from Ntropy
+            
+        Returns:
+            dict: The inserted record
+        """
+        try:
+            data = {
+                'id': transaction_data.get('id'),
+                'batch_id': batch_id,
+                'enriched_data': transaction_data,
+                'status': 'completed'
+            }
+            
+            result = self.supabase.table('ntropy_transactions').insert(data).execute()
+            return result.data[0]
+        except Exception as e:
+            raise ValueError(f"Failed to store Ntropy transaction: {str(e)}")
+
+    async def get_batch_status(self, batch_id: str) -> dict:
+        """
+        Get the current status of a batch
+        """
+        batch = self.sdk.batches.get(id=batch_id)
+        
+        if batch.is_completed():
+            results = self.sdk.batches.results(id=batch_id)
+            
+            # Store each enriched transaction in Supabase
+            for transaction in results.model_dump().get('data', []):
+                await self.store_ntropy_transaction(batch_id, transaction)
+            
+            return {
+                "event": "complete",
+                "data": {"status": batch.status, "results": results.model_dump()}
+            }
+        elif batch.is_error():
+            return {
+                "event": "error",
+                "data": {"status": batch.status, "error": "Batch processing failed"}
+            }
+        else:
+            return {
+                "event": "progress",
+                "data": {
+                    "status": batch.status,
+                    "progress": batch.progress,
+                    "total": batch.total
+                }
+            }

@@ -4,6 +4,7 @@ import { DataTable } from "../components/transactions/data-table";
 import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
 import { AddAccountDialog } from "~/components/transactions/add-account-dialog";
+import { ExpiringAgreementsNotification } from "~/components/ExpiringAgreementsNotification";
 import type { LoaderFunction, ActionFunction } from "@remix-run/node";
 import { getBankList, getBuildLink } from "~/api/gocardless";
 import { useSearchParams, useLoaderData, useFetcher } from "@remix-run/react";
@@ -316,7 +317,8 @@ export default function Transactions() {
   });
 
   return (
-    <div>
+    <div className="container mx-auto py-10">
+      <ExpiringAgreementsNotification />
       <h2 className="text-xl font-semibold mb-4">Transactions</h2>
       <div className="rounded-lg shadow p-4">
         <div className="flex items-center justify-between py-4">
@@ -337,7 +339,10 @@ export default function Transactions() {
               Save Changes
             </Button>
             <Button variant="outline" className="bg-purple-100 text-black hover:bg-purple-200">
-              Auto Reconcile ✨
+              AI Enrich✨
+            </Button>
+            <Button variant="outline" className="bg-purple-100 text-black hover:bg-purple-200">
+              AI Reconcile✨
             </Button>
             <AddAccountDialog />
           </div>

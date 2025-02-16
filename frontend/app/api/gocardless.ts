@@ -45,3 +45,32 @@ export async function getBuildLink(institutionId: string | null, transactionTota
 
   return await response.json();
 }
+
+export interface ExpiringAgreement {
+  id: string;
+  institution_id: string;
+  expires_at: string;
+  days_until_expiry: number;
+}
+
+export async function checkExpiringAgreements(token: string, daysThreshold: number = 7): Promise<ExpiringAgreement[]> {
+  const searchParams = new URLSearchParams({ days_threshold: daysThreshold.toString() });
+  const url = buildUrl("gocardless/check-expiring", searchParams);
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => null);
+    throw new Error(
+      errorData?.detail || `HTTP error! status: ${response.status}`
+    );
+  }
+
+  return await response.json();
+}

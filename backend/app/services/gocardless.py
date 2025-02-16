@@ -4,9 +4,11 @@ from dotenv import load_dotenv
 import random
 import logging
 import uuid  # Add UUID import
+from datetime import datetime, timedelta
 
 from app.services.supabase import get_supabase
 from app.services.sample_data import sample_transactions
+
 import json
 load_dotenv()
 
@@ -136,12 +138,17 @@ async def store_requisition_data(requisition_data: dict):
     logger.info(f"Storing link data in Supabase for reference: {requisition_data.get('reference')}")
     supabase = await get_supabase()
     
+    # Calculate expiration date (30 days from creation)
+    created_date = datetime.fromisoformat(requisition_data['created'].replace('Z', '+00:00'))
+    expiration_date = created_date + timedelta(days=30)
+    
     data = {
         'id': requisition_data['id'],
         'agreement': requisition_data['agreement'],
         'reference': requisition_data['reference'],
         'institution_id': requisition_data['institution_id'],
         'created': requisition_data['created'],
+        'expires_at': expiration_date.isoformat(),
         'user_id': requisition_data['user_id']
     }
     
@@ -319,7 +326,6 @@ async def store_transactions(transactions: dict, user_id: str):
     except Exception as e:
         logger.error(f"Failed to store transactions: {str(e)}")
         raise
-
 
 async def get_user_id_from_reference(reference: str) -> str:
     logger.info(f"Fetching user ID for reference: {reference}")

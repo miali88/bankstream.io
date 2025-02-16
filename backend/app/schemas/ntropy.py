@@ -29,15 +29,8 @@ class BatchCreateResponse(BaseModel):
     total: int
     request_id: str
 
-class BatchGetResponse(BaseModel):
-    id: str
-    operation: str
-    status: str
-    created_at: datetime
-    updated_at: datetime
-    progress: int
-    total: int
-    request_id: str | None = None
+class BatchGetResponse(BatchCreateResponse):
+    pass
 
 class BatchResultsResponse(BaseModel):
     id: str

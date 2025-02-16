@@ -4,10 +4,13 @@ from sse_starlette.sse import EventSourceResponse
 from pydantic import BaseModel
 from dotenv import load_dotenv
 import asyncio
-from typing import Dict
+from typing import Dict, List
 import logging
+from datetime import datetime
 
+from app.schemas.gocardless import BuildLinkResponse, BankListResponse
 from app.services import gocardless
+from app.services import agreement_monitor
 from app.core.auth import get_current_user
 
 load_dotenv()
@@ -17,24 +20,16 @@ router = APIRouter()
 # Store active SSE connections by ref instead of user_id
 active_sse_connections: Dict[str, asyncio.Queue] = {}
 
-class BankListResponse(BaseModel):
-    id: str
-    name: str
-    transaction_total_days: str
-    logo: str
-
-class BuildLinkResponse(BaseModel):
-    link: str
 
 """ step 1, user selects country and selects their bank from the list of banks """
-@router.get("/bank_list")
+@router.get("/bank_list", response_model=BankListResponse)
 async def get_list_of_banks(country: str, user_id: str = Depends(get_current_user)):
     print(f"\n /list-of-banks called by user {user_id}")
     return await gocardless.fetch_list_of_banks(country)
 
 
 """ step 2, we build a link to the chosen bank, and return the link for user to approve our access """
-@router.get("/build_link")
+@router.get("/build_link", response_model=BuildLinkResponse)
 async def build_bank_link(institution_id: str, transaction_total_days: str,
                           user_id: str = Depends(get_current_user), medium: str = "online"):
     print(f"\n /build_link called by user {user_id}")
@@ -84,7 +79,7 @@ async def sse_endpoint(request: Request, ref: str = Query(...)):
         raise HTTPException(status_code=400, detail="Bad Request")
 
 
-""" step 3, redirect user to our site, fetch transactions for new accounts added """
+""" step 3, gocardless redirects user to our site, fetch transactions for new accounts added """
 @router.get("/callback")
 async def add_account_callback(ref: str):
     print(f"\n /callback called with ref: {ref}")
@@ -112,6 +107,45 @@ async def add_account_callback(ref: str):
         return result
     except Exception as e:
         print(f"Error in callback: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+class ExpiringAgreement(BaseModel):
+    id: str
+    institution_id: str
+    expires_at: str
+    days_until_expiry: int
+
+@router.get("/check-expiring", response_model=List[ExpiringAgreement])
+async def check_expiring_agreements(
+    user_id: str = Depends(get_current_user),
+    days_threshold: int = Query(default=7, ge=1, le=30)
+):
+    """
+    Check for agreements that are expiring soon for the current user
+    """
+    try:
+        # Get expiring agreements
+        agreements = await agreement_monitor.get_expiring_agreements(days_threshold)
+        
+        # Filter for current user and calculate days until expiry
+        now = datetime.utcnow()
+        user_agreements = []
+        
+        for agreement in agreements:
+            if agreement['user_id'] == user_id:
+                expires_at = datetime.fromisoformat(agreement['expires_at'].replace('Z', '+00:00'))
+                days_until = (expires_at - now).days
+                
+                user_agreements.append(ExpiringAgreement(
+                    id=agreement['id'],
+                    institution_id=agreement['institution_id'],
+                    expires_at=agreement['expires_at'],
+                    days_until_expiry=days_until
+                ))
+        
+        return user_agreements
+    except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
     
