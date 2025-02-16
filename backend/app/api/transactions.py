@@ -8,6 +8,8 @@ import logging
 from app.services.supabase import get_supabase
 from app.core.auth import get_current_user
 from app.schemas.transactions import GetTransactions
+from app.services.reconciliation import ReconciliationService
+from app.services.transactions import TransactionService
 
 load_dotenv()
 
@@ -22,6 +24,9 @@ class TransactionBatchUpdate(BaseModel):
     transactions: List[TransactionUpdate]
     page: Optional[int] = None
     page_size: Optional[int] = None
+
+class ReconciliationRequest(BaseModel):
+    transaction_ids: List[str]
 
 @router.post("/")
 async def create_transaction(
@@ -43,39 +48,16 @@ async def get_transactions(
     page_size: int = Query(default=10, ge=1, le=100)
 ):
     try:
-        supabase = await get_supabase()
-        offset = (page - 1) * page_size
-
-        print("Executing query for user_id:", user_id)
-        print(f"Pagination: page={page}, page_size={page_size}, offset={offset}")
+        transaction_service = TransactionService()
+        result = await transaction_service.get_user_transactions(
+            user_id=user_id,
+            page=page,
+            page_size=page_size
+        )
         
-        # Single query to get all data
-        result = await supabase.table("gocardless_transactions")\
-            .select("*", count="exact")\
-            .eq("user_id", user_id)\
-            .range(offset, offset + page_size - 1)\
-            .order("created_at", desc=True)\
-            .execute()
-        
-        total_count = result.count
-        
-        # Debug the response
-        if result.data:
-            print("First transaction ID:", result.data[0]['id'])
-            print("Number of transactions returned:", len(result.data))
-            print("Sample transaction:", result.data[0])
-        else:
-            print("No transactions found")
-        
-        return {
-            "transactions": result.data,
-            "total_count": total_count,
-            "page": page,
-            "page_size": page_size,
-            "total_pages": -(-total_count // page_size)
-        }
+        return result
     except Exception as e:
-        print(f"Error in get_transactions: {str(e)}")
+        logging.error(f"Error in get_transactions: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.put("/{transaction_id}")
@@ -177,4 +159,21 @@ async def patch_transactions_batch(
         return results
     except Exception as e:
         logging.error(f"Batch update failed with error: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/reconcile")
+async def reconcile_transactions(
+    user_data: dict = Depends(get_current_user)
+):
+    """
+    Reconcile a batch of transactions against the chart of accounts using LLM.
+    """
+    try:
+        user_id = user_data.get("id")
+        reconciliation_service = ReconciliationService()
+        return await reconciliation_service.inference(user_id)
+    except Exception as e:
+        logging.error(f"Reconciliation failed: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e)) 
+    
+    

@@ -64,16 +64,20 @@ class NtropyService:
 
     async def get_user_transactions(self, user_id: str) -> List[TransactionsTable]:
         """
-        Fetch all transactions for a given user
+        Fetch all transactions for a given user that haven't been enriched by Ntropy yet
         
         Args:
             user_id (str): The ID of the user
             
         Returns:
-            List[TransactionsTable]: List of transactions for the user
+            List[TransactionsTable]: List of non-enriched transactions for the user
         """
         supabase = await self.get_supabase()
-        result = await supabase.table('transactions').select('*').eq('user_id', user_id).execute()
+        result = await (supabase.table('transactions')
+                       .select('*')
+                       .eq('user_id', user_id)
+                       .or_('ntropy_enrich.is.null,ntropy_enrich.eq.false')
+                       .execute())
         
         if not result.data:
             return []
@@ -103,7 +107,7 @@ class NtropyService:
 
     async def store_ntropy_transaction(self, batch_id: str, transaction_data: dict) -> dict:
         """
-        Store Ntropy transaction data in Supabase
+        Store Ntropy transaction data in Supabase and update the enrichment flag
         
         Args:
             batch_id (str): The Ntropy batch ID
@@ -113,16 +117,23 @@ class NtropyService:
             dict: The inserted record
         """
         try:
-            data = {
+            supabase = await self.get_supabase()
+            
+            # Store enriched data in ntropy_transactions table
+            ntropy_data = {
                 'id': transaction_data.get('id'),
                 'batch_id': batch_id,
                 'enriched_data': transaction_data,
                 'status': 'completed'
             }
+            ntropy_result = await supabase.table('ntropy_transactions').insert(ntropy_data).execute()
             
-            supabase = await self.get_supabase()
-            result = await supabase.table('ntropy_transactions').insert(data).execute()
-            return result.data[0]
+            # Update the ntropy_enrich flag in the transactions table
+            await supabase.table('transactions').update({
+                'ntropy_enrich': True
+            }).eq('id', transaction_data.get('id')).execute()
+            
+            return ntropy_result.data[0]
         except Exception as e:
             raise ValueError(f"Failed to store Ntropy transaction: {str(e)}")
 
@@ -145,6 +156,7 @@ class NtropyService:
             # Store each enriched transaction in Supabase
             for transaction in results.model_dump().get('data', []):
                 await self.store_ntropy_transaction(batch_id, transaction)
+            
             
             return {
                 "status": "complete",
