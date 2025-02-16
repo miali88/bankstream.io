@@ -7,7 +7,8 @@ from app.schemas.transactions import TransactionsTable
 from app.schemas.ntropy import EnrichedTransactionRequest
 from app.schemas.ntropy import BatchCreateResponse
 
-def transform_transactions_for_ntropy(transactions: List[TransactionsTable]) -> List[EnrichedTransactionRequest]:
+def transform_transactions_for_ntropy(
+        transactions: List[TransactionsTable]) -> List[EnrichedTransactionRequest]:
     """
     Transform transactions from TransactionsTable format to Ntropy-compatible format
     
