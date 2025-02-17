@@ -22,6 +22,7 @@ class TransactionsTable(BaseModel):
     chart_of_account: Optional[str] = None
     category_id: Optional[str] = None
     entity: Optional[str] = None
+    country: Optional[str] = None
 
 
     class Config:
