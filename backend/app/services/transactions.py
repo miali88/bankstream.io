@@ -46,11 +46,12 @@ class TransactionService:
         result = await (supabase.table('gocardless_transactions')
             .select('*, ntropy_transactions(enriched_data)', count='exact')
             .eq('user_id', user_id)
-            .eq('ntropy_enrich', True)
+            .is_('ntropy_enrich', 'true')
             .order('created_at', desc=True)
             .range(offset, offset + page_size - 1)
             .execute())
-        
+        print("bombaclart result", result)
+
         total_count = result.count
         logger.info(f"Found {total_count} total transactions for user")
         transactions = []
@@ -58,12 +59,12 @@ class TransactionService:
         # Process the results to extract only entities and categories
         logger.debug("Processing transaction results to extract enriched data")
         for tx in result.data:
-            ntropy_data = tx.pop('ntropy_transactions', [])
-            if ntropy_data and len(ntropy_data) > 0:
+            ntropy_data = tx.get('ntropy_transactions')
+            if ntropy_data and isinstance(ntropy_data, list) and len(ntropy_data) > 0:
                 logger.debug(f"Found enriched data for transaction {tx.get('id')}")
                 enriched_data = ntropy_data[0].get('enriched_data', {})
-                tx['entities'] = enriched_data.get('entities')
-                tx['categories'] = enriched_data.get('categories')
+                tx['entities'] = enriched_data.get('entities', {})
+                tx['categories'] = enriched_data.get('categories', {})
             else:
                 logger.debug(f"No enriched data found for transaction {tx.get('id')}")
                 tx['entities'] = None
