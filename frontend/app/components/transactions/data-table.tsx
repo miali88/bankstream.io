@@ -19,6 +19,8 @@ import {
 import { Button } from "../ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
+import { useNavigation, useLocation, useRevalidator } from "@remix-run/react";
+
 interface PaginationProps {
   pageIndex: number;
   pageSize: number;
@@ -42,6 +44,15 @@ export function DataTable<TData, TValue>({
   onGlobalFilterChange,
   pagination,
 }: DataTableProps<TData, TValue>) {
+  const navigation = useNavigation();
+  const location = useLocation();
+  const revalidator = useRevalidator();
+
+  const isLoading =
+    (navigation.state === "loading" &&
+      navigation.location?.pathname === location.pathname) ||
+    revalidator.state === "loading";
+
   const table = useReactTable({
     data,
     columns,
@@ -50,10 +61,12 @@ export function DataTable<TData, TValue>({
     getPaginationRowModel: getPaginationRowModel(),
     state: {
       globalFilter,
-      pagination: pagination ? {
-        pageIndex: pagination.pageIndex,
-        pageSize: pagination.pageSize,
-      } : undefined,
+      pagination: pagination
+        ? {
+            pageIndex: pagination.pageIndex,
+            pageSize: pagination.pageSize,
+          }
+        : undefined,
     },
     onGlobalFilterChange,
     pageCount: pagination?.pageCount,
@@ -61,7 +74,12 @@ export function DataTable<TData, TValue>({
   });
 
   return (
-    <div>
+    <div className="relative">
+      {isLoading && (
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/50">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-r-transparent" />
+        </div>
+      )}
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -113,8 +131,11 @@ export function DataTable<TData, TValue>({
         <div className="flex items-center justify-between px-2 py-4">
           <div className="flex-1 text-sm text-muted-foreground">
             Showing {pagination.pageIndex * pagination.pageSize + 1} to{" "}
-            {Math.min((pagination.pageIndex + 1) * pagination.pageSize, pagination.totalRows)} of{" "}
-            {pagination.totalRows} entries
+            {Math.min(
+              (pagination.pageIndex + 1) * pagination.pageSize,
+              pagination.totalRows
+            )}{" "}
+            of {pagination.totalRows} entries
           </div>
           <div className="flex items-center space-x-2">
             <Button

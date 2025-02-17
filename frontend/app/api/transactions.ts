@@ -86,6 +86,7 @@ async function checkEnrichmentStatus(
 
     const status = await statusResponse.json();
 
+    console.log(status, " HAH HHHHA HH");
     if (status.status === "complete") {
       enrichmentComplete = true;
     } else if (status.status === "error") {
@@ -112,6 +113,7 @@ export async function getTransactions(
     if (!enrichResult.success) {
       throw new Error("Enrichment status check failed");
     }
+    console.log(batchId, "BAtchhh", enrichResult);
   }
 
   // Then fetch the transactions
@@ -160,11 +162,8 @@ export async function startEnrichment(
     signal,
   });
 
-  console.log(response, "TETTT");
-
   if (!response.ok) {
     throw new Error("Failed to start enrichment process");
   }
-
   return response.json();
 }
