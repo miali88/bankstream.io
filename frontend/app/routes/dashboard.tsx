@@ -26,9 +26,6 @@ export const loader: LoaderFunction = async (args) => {
 };
 
 // Add a loader to prevent indefinite loading
-export function clientLoader() {
-  return { ok: true };
-}
 
 function Dashboard() {
   const location = useLocation();

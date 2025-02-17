@@ -12,6 +12,8 @@ import {
   useLoaderData,
   useFetcher,
   useActionData,
+  useSubmit,
+  useNavigation,
 } from "@remix-run/react";
 import { useEffect, useState } from "react";
 import { useToast } from "~/components/ui/use-toast";
@@ -26,6 +28,8 @@ import { config } from "~/config.server";
 import { getTransactions, startEnrichment } from "~/api/transactions";
 import { buildUrl } from "~/api/config";
 import type { ActionData } from "@remix-run/node";
+
+const API_BASE_URL = config.apiBaseUrl;
 
 interface CountryData {
   cca2: string;
@@ -83,6 +87,7 @@ export const loader: LoaderFunction = async (args) => {
       batchId || undefined
     );
 
+    console.log(transactionData, "HAHHH HH");
     // Fetch countries data from API
     const response = await fetch("https://restcountries.com/v3.1/all");
     const data = await response.json();
@@ -118,12 +123,16 @@ export const loader: LoaderFunction = async (args) => {
   }
 };
 
-// Add type for the action data
 interface EnrichActionData {
   batchId?: string;
+  bankList?: any;
+  link?: string;
+  ref?: string;
+  success?: boolean;
+  data?: any;
 }
 
-export const action: ActionFunction = async (args) => {
+export const action: ActionFunction = async (args): Promise<Response> => {
   const { userId, getToken } = await getAuth(args);
 
   if (!userId) {
@@ -138,7 +147,6 @@ export const action: ActionFunction = async (args) => {
   if (action === "enrich") {
     try {
       const enrichResponse = await startEnrichment(token as string);
-      // Return with proper typing
       return json<EnrichActionData>({ batchId: enrichResponse.id });
     } catch (error) {
       console.error("Enrichment error:", error);
@@ -181,7 +189,7 @@ export const action: ActionFunction = async (args) => {
 
       const result = await response.json();
       console.log("Update successful:", result);
-      return json({ success: true, data: result });
+      return json<EnrichActionData>({ success: true, data: result });
     } catch (error: unknown) {
       console.error("Error updating transactions:", error);
       if (error instanceof Error) {
@@ -197,7 +205,7 @@ export const action: ActionFunction = async (args) => {
   try {
     if (countryValue && typeof countryValue === "string") {
       const bankList = await getBankList(countryValue, token);
-      return { bankList };
+      return json<EnrichActionData>({ bankList });
     }
 
     if (bankIdValue && typeof bankIdValue === "string") {
@@ -213,12 +221,13 @@ export const action: ActionFunction = async (args) => {
       const { link, ref } = await getBuildLink(
         bankIdValue,
         transactionTotalDaysValue,
-        token
+        token as string
       );
-      return { link, ref };
+      return json<EnrichActionData>({ link, ref });
     }
 
-    throw new Error("Invalid form data provided");
+    // Default response if no conditions are met
+    return json<EnrichActionData>({});
   } catch (error) {
     console.error("Error:", error);
     throw new Error("Failed to process request");
@@ -234,8 +243,11 @@ export default function Transactions() {
   const [pendingChanges, setPendingChanges] = useState<
     Record<string, Record<string, string>>
   >({});
-  const fetcher = useFetcher();
+  const submit = useSubmit();
+  const navigation = useNavigation();
   const actionData = useActionData<EnrichActionData>();
+
+  console.log(actionData, "KK AKKK");
 
   useEffect(() => {
     if (searchParams.get("trx") === "succeed") {
@@ -256,14 +268,13 @@ export default function Transactions() {
   }, [searchParams, toast]);
 
   useEffect(() => {
-    // Handle enrichment response using actionData instead of fetcher
-    if (actionData?.batchId) {
+    if (actionData && actionData.batchId) {
       setSearchParams((prev) => {
-        prev.set("batch_id", actionData.batchId);
+        prev.set("batch_id", actionData.batchId!);
         return prev;
       });
     }
-  }, [actionData?.batchId, setSearchParams]);
+  }, [actionData, setSearchParams]);
 
   const handleTransactionChange = (
     transactionId: string,
@@ -317,11 +328,11 @@ export default function Transactions() {
       })
     );
 
-    fetcher.submit(formData, { method: "patch" });
+    submit(formData, { method: "patch" });
 
     // Add response logging
-    console.log("Fetcher state:", fetcher.state);
-    console.log("Fetcher data:", fetcher.data);
+    console.log("Submit state:", submit.state);
+    console.log("Submit data:", submit.data);
 
     // Clear pending changes after submission
     setPendingChanges({});
@@ -349,14 +360,18 @@ export default function Transactions() {
   const handleEnrichClick = () => {
     const formData = new FormData();
     formData.append("_action", "enrich");
-    // Use regular form submission instead of fetcher
-    fetcher.submit(formData, { method: "post" });
+    submit(formData, {
+      method: "post",
+      action: "/dashboard/transactions",
+    });
   };
 
   const columns = getColumns({
     onTransactionChange: handleTransactionChange,
     pendingChanges: pendingChanges,
   });
+
+  const isSubmitting = navigation.state === "submitting";
 
   return (
     <div className="container mx-auto py-10">
@@ -384,9 +399,9 @@ export default function Transactions() {
               variant="outline"
               className="bg-purple-100 text-black hover:bg-purple-200"
               onClick={handleEnrichClick}
-              disabled={fetcher.state === "submitting"}
+              disabled={isSubmitting}
             >
-              {fetcher.state === "submitting" ? "Starting..." : "AI Enrich✨"}
+              {isSubmitting ? "Loading..." : "AI Enrich✨"}
             </Button>
             <Button
               variant="outline"
