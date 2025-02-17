@@ -93,6 +93,7 @@ async def delete_transaction(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @router.patch("/batch")
 async def patch_transactions_batch(
     update_data: TransactionBatchUpdate,
@@ -160,6 +161,8 @@ async def patch_transactions_batch(
     except Exception as e:
         logging.error(f"Batch update failed with error: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
+
+
 
 @router.post("/reconcile")
 async def reconcile_transactions(

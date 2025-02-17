@@ -51,7 +51,17 @@ async def get_current_user(
     """
     try:
         token = credentials.credentials
+        return await validate_token(token)
         
+    except Exception as e:
+        logger.error(f"Unexpected error during token validation: {str(e)}")
+        raise HTTPException(status_code=401, detail=str(e))
+
+async def validate_token(token: str) -> str:
+    """
+    Helper function to validate a raw JWT token and return the user ID
+    """
+    try:
         # Decode header without verification to get the key ID
         try:
             header = jwt.get_unverified_header(token)
@@ -100,9 +110,7 @@ async def get_current_user(
             
         logger.info(f"Successfully validated token for user: {user_id}")
         return user_id
-        
+    
     except Exception as e:
         logger.error(f"Unexpected error during token validation: {str(e)}")
         raise HTTPException(status_code=401, detail=str(e))
-
-    return {"message": "Logout successful"} 

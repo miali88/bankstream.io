@@ -1,7 +1,9 @@
 import { Link, useLocation } from "@remix-run/react";
 import { cn } from "../lib/utils";
-import { BarChart3, Receipt, LogOut, BookOpen } from "lucide-react";
+import { BarChart3, Receipt, LogOut, BookOpen, Link2 } from "lucide-react";
 import { Button } from "./ui/button";
+import { buildUrl } from "../api/config";
+import { useAuth } from "@clerk/remix";
 
 const sidebarItems = [
   {
@@ -27,11 +29,25 @@ interface SidebarContentProps {
 }
 
 export function SidebarContent({ location, setOpen }: SidebarContentProps) {
+  const { getToken } = useAuth();
+  
+  const handleXeroConnect = async () => {
+    const token = await getToken();
+    const state = JSON.stringify({ 
+      clerk_token: token,
+      xero_state: crypto.randomUUID()
+    });
+    
+    // Create URL object to properly handle query parameters
+    const url = new URL(buildUrl('xero/login'));
+    url.searchParams.append('state', state);
+    window.location.href = url.toString();
+  };
+
   return (
     <>
       <div className="p-4 font-semibold border-b flex justify-between items-center">
         <span>Bankstream</span>
-
       </div>
       <nav className="space-y-1 p-2 flex flex-col h-full">
         <div className="flex-1">
@@ -52,6 +68,14 @@ export function SidebarContent({ location, setOpen }: SidebarContentProps) {
               </Link>
             </Button>
           ))}
+          <Button
+            variant="ghost"
+            className="w-full justify-start gap-2"
+            onClick={handleXeroConnect}
+          >
+            <Link2 className="h-4 w-4" />
+            Connect to Xero
+          </Button>
           <Button
             variant="ghost"
             className="w-full justify-start gap-2"

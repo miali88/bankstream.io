@@ -8,6 +8,8 @@
 import json
 import logging
 from pydantic import BaseModel
+from datetime import datetime, timezone
+from typing import Optional, Dict, Any
 
 from app.services.vectorise_data import kb_item_to_chunks
 from app.services.supabase import get_supabase
@@ -134,4 +136,100 @@ async def vectorise_coa(user_id: str):
 
     logger.info(f"Successfully completed vectorise_coa process for user_id: {user_id}")
     return True
+
+async def store_xero_credentials(user_id: str, token_data: Dict[Any, Any]) -> None:
+    """Store Xero credentials in Supabase."""
+    try:
+        supabase = await get_supabase()
+        
+        # Calculate expires_at timestamp
+        expires_in = token_data.get('expires_in', 1800)  # Default to 30 minutes if not provided
+        expires_at = datetime.now(timezone.utc).timestamp() + expires_in
+        
+        # Extract tenant information
+        tenant_id = token_data.get('tenant_id')
+        if not tenant_id:
+            raise ValueError("No tenant_id found in token data")
+            
+        # Prepare credentials for storage - only include fields that exist in the database
+        credentials = {
+            'user_id': user_id,
+            'tenant_id': tenant_id,
+            'access_token': token_data['access_token'],
+            'refresh_token': token_data.get('refresh_token'),  # This is required per schema
+            'token_type': token_data['token_type'],
+            'expires_at': datetime.fromtimestamp(expires_at, tz=timezone.utc).isoformat()
+        }
+        
+        # Validate required fields
+        if not credentials['refresh_token']:
+            raise ValueError("refresh_token is required but not present in token data")
+        
+        # Upsert the credentials
+        result = await supabase.table('xero_credentials').upsert(
+            credentials,
+            on_conflict='user_id,tenant_id'
+        ).execute()
+        
+        if hasattr(result, 'error') and result.error is not None:
+            raise Exception(f"Failed to store credentials: {result.error}")
+                
+        logger.info(f"Successfully stored Xero credentials for user {user_id} and tenant {tenant_id}")
+        
+    except Exception as e:
+        logger.error(f"Error storing Xero credentials: {str(e)}")
+        raise
+
+async def get_xero_credentials(user_id: str, tenant_id: str) -> Optional[Dict[str, Any]]:
+    """Retrieve Xero credentials from Supabase."""
+    try:
+        supabase = await get_supabase()
+        
+        result = supabase.table('xero_credentials').select('*').eq(
+            'user_id', user_id
+        ).eq(
+            'tenant_id', tenant_id
+        ).execute()
+        
+        if hasattr(result, 'error') and result.error is not None:
+            raise Exception(f"Failed to retrieve credentials: {result.error}")
+            
+        data = result.data
+        if not data:
+            return None
+            
+        credentials = data[0]
+        
+        # Check if token is expired
+        expires_at = datetime.fromisoformat(credentials['expires_at'])
+        if expires_at <= datetime.now(timezone.utc):
+            logger.info(f"Token expired for user {user_id}, tenant {tenant_id}")
+            # TODO: Implement token refresh logic here
+            return None
+            
+        return credentials
+        
+    except Exception as e:
+        logger.error(f"Error retrieving Xero credentials: {str(e)}")
+        raise
+
+async def delete_xero_credentials(user_id: str, tenant_id: Optional[str] = None) -> None:
+    """Delete Xero credentials from Supabase."""
+    try:
+        supabase = await get_supabase()
+        
+        query = supabase.table('xero_credentials').delete().eq('user_id', user_id)
+        if tenant_id:
+            query = query.eq('tenant_id', tenant_id)
+            
+        result = query.execute()
+        
+        if hasattr(result, 'error') and result.error is not None:
+            raise Exception(f"Failed to delete credentials: {result.error}")
+            
+        logger.info(f"Successfully deleted Xero credentials for user {user_id}")
+        
+    except Exception as e:
+        logger.error(f"Error deleting Xero credentials: {str(e)}")
+        raise
 

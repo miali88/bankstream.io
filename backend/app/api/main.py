@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api import transactions, gocardless, clerk, ntropy
+from app.api import transactions, gocardless, clerk, ntropy, xero
 
 api_router = APIRouter()
 
@@ -8,3 +8,4 @@ api_router.include_router(transactions.router, prefix="/transactions", tags=["tr
 api_router.include_router(gocardless.router, prefix="/gocardless", tags=["gocardless"])
 api_router.include_router(clerk.router, prefix="/clerk", tags=["clerk"])
 api_router.include_router(ntropy.router, prefix="/ntropy", tags=["ntropy"])
+api_router.include_router(xero.router, prefix="/xero", tags=["xero"])
