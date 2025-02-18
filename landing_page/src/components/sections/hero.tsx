@@ -7,6 +7,7 @@ import HeroVideoDialog from "@/components/magicui/hero-video";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { WavyBackground } from "@/components/ui/wavy-background";
 
 const ease = [0.16, 1, 0.3, 1];
 
@@ -55,22 +56,23 @@ function HeroTitles() {
           staggerChildren: 0.2,
         }}
       >
-        {["Get Financial Data", "In Minutes", "Not Days"].map(
+        {["Reconcile your bank transactions", "In Minutes", "Not Days"].map(
           (text, index) => (
             <motion.span
               key={index}
-            className="inline-block px-1 md:px-2 text-balance font-semibold"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{
-              duration: 0.8,
-              delay: index * 0.2,
-              ease,
-            }}
-          >
-            {text}
-          </motion.span>
-        ))}
+              className="inline-block px-1 md:px-2 text-balance font-semibold"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{
+                duration: 0.8,
+                delay: index * 0.2,
+                ease,
+              }}
+            >
+              {text}
+            </motion.span>
+          )
+        )}
       </motion.h1>
       <motion.p
         className="mx-auto max-w-xl text-center text-lg leading-7 text-muted-foreground sm:text-xl sm:leading-9 text-balance"
@@ -101,10 +103,9 @@ function HeroCTA() {
           href="/signup"
           className={cn(
             buttonVariants({ variant: "default" }),
-            "w-full sm:w-auto text-background flex gap-2"
+            "w-full sm:w-auto text-primary-foreground flex gap-2"
           )}
         >
-          <Icons.logo className="h-6 w-6" />
           Get started for free
         </Link>
       </motion.div>
@@ -141,14 +142,22 @@ function HeroImage() {
 
 export default function Hero2() {
   return (
-    <section id="hero">
-      <div className="relative flex w-full flex-col items-center justify-start px-4 pt-32 sm:px-6 sm:pt-24 md:pt-32 lg:px-8">
-        <HeroPill />
-        <HeroTitles />
-        <HeroCTA />
-        <HeroImage />
-        <div className="pointer-events-none absolute inset-x-0 -bottom-12 h-1/3 bg-gradient-to-t from-background via-background to-transparent lg:h-1/4"></div>
-      </div>
-    </section>
+    <WavyBackground
+      colors={["#38bdf8", "#818cf8", "#c084fc"]}
+      waveOpacity={0.3}
+      blur={10}
+      speed="slow"
+      containerClassName="h-[100vh] relative"
+      className="w-full"
+    >
+      <section id="hero">
+        <div className="relative flex w-full flex-col items-center justify-start px-4 pt-32 sm:px-6 sm:pt-24 md:pt-32 lg:px-8">
+          <HeroTitles />
+          <HeroCTA />
+          <HeroImage />
+          <div className="pointer-events-none absolute inset-x-0 -bottom-12 h-1/3 bg-gradient-to-t from-background via-background to-transparent lg:h-1/4"></div>
+        </div>
+      </section>
+    </WavyBackground>
   );
 }
