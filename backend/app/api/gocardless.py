@@ -78,7 +78,7 @@ async def sse_endpoint(request: Request, ref: str = Query(...)):
         raise HTTPException(status_code=400, detail="Bad Request")
 
 
-""" step 3, gocardless redirects user to our site, fetch transactions for new accounts added """
+""" step 3, gocardless redirect, fetch transactions for new accounts added """
 @router.get("/callback")
 async def add_account_callback(ref: str):
     print(f"\n /callback called with ref: {ref}")

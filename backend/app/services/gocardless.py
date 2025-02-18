@@ -194,24 +194,10 @@ async def add_account(reference: str):
             account_details = await get_account_details(account_id, access_token)
             await store_account_details(account_details, user_id, agreement_id)
         
-        # Get transactions for all accounts
         transactions = await get_transactions(accounts, access_token)
-        with open('transactions.json', 'w') as f:
-            json.dump(transactions, f)
-            
-        # Transform and store the transactions
+
         transformed_transactions = transform_transactions(transactions['transactions']['booked'])
-        with open('transformed_transactions.json', 'w') as f:
-            json.dump(transformed_transactions, f)
-            
-        # Update transactions with account details
-        for transaction in transformed_transactions:
-            account_id = transaction.get('account_id')
-            if account_id in accounts:
-                account_details = await get_account_details(account_id, access_token)
-                transaction['iban'] = account_details.get('iban')
-                transaction['institution_id'] = account_details.get('institution_id')
-                
+
         await store_transactions(transformed_transactions, user_id)
         
         logger.info("Successfully completed account addition and transaction retrieval")
