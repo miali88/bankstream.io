@@ -5,8 +5,9 @@ from dotenv import load_dotenv
 from pydantic import BaseModel
 from typing import List, Optional
 import logging
-import csv
+from fastapi.responses import StreamingResponse
 from io import StringIO
+import csv
 
 from app.services.supabase import get_supabase
 from app.core.auth import get_current_user
@@ -20,6 +21,8 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+logger = logging.getLogger(__name__)
 
 class TransactionUpdate(BaseModel):
     id: str
@@ -37,12 +40,12 @@ class ReconciliationRequest(BaseModel):
 @router.post("/")
 async def create_transaction(
     transaction_data: dict,
-    user_data: dict = Depends(get_current_user)
+    user_id: str = Depends(get_current_user)
 ):
     logger.info("Creating a new transaction")
     try:
         supabase = await get_supabase()
-        transaction_data["user_id"] = user_data.get("id")
+        transaction_data["user_id"] = user_id
         result = await supabase.table("transactions").insert(transaction_data).execute()
         logger.info("Transaction created successfully")
         return result.data
@@ -74,7 +77,7 @@ async def get_transactions(
 async def update_transaction(
     transaction_id: str,
     transaction_data: dict,
-    user_data: dict = Depends(get_current_user)
+    user_id: str = Depends(get_current_user)
 ):
     logger.info(f"Updating transaction {transaction_id}")
     try:
@@ -82,7 +85,7 @@ async def update_transaction(
         result = await supabase.table("transactions")\
             .update(transaction_data)\
             .eq("id", transaction_id)\
-            .eq("user_id", user_data.get("id"))\
+            .eq("user_id", user_id)\
             .execute()
         logger.info(f"Transaction {transaction_id} updated successfully")
         return result.data
@@ -93,7 +96,7 @@ async def update_transaction(
 @router.delete("/{transaction_id}")
 async def delete_transaction(
     transaction_id: str,
-    user_data: dict = Depends(get_current_user)
+    user_id: str = Depends(get_current_user)
 ):
     logger.info(f"Deleting transaction {transaction_id}")
     try:
@@ -101,7 +104,7 @@ async def delete_transaction(
         result = await supabase.table("transactions")\
             .delete()\
             .eq("id", transaction_id)\
-            .eq("user_id", user_data.get("id"))\
+            .eq("user_id", user_id)\
             .execute()
         logger.info(f"Transaction {transaction_id} deleted successfully")
         return {"message": "Transaction deleted successfully"}
@@ -114,8 +117,21 @@ async def patch_transactions_batch(
     update_data: TransactionBatchUpdate,
     user_id: str = Depends(get_current_user)
 ):
-    logger.info(f"Starting batch update for user {user_id}")
     try:
+        print("\n=== Batch Update Request Details ===")
+        print(f"User ID: {user_id}")
+        print(f"Number of transactions to update: {len(update_data.transactions)}")
+        print(f"Page: {update_data.page}")
+        print(f"Page Size: {update_data.page_size}")
+        print("\nTransaction Updates:")
+        for idx, transaction in enumerate(update_data.transactions, 1):
+            print(f"\nTransaction {idx}:")
+            print(f"  ID: {transaction.id}")
+            print(f"  Category: {transaction.category}")
+            print(f"  Chart of Account: {transaction.chart_of_accounts}")
+            print(f"  Raw transaction data: {transaction.dict()}")
+        print("\n=== End Request Details ===\n")
+
         supabase = await get_supabase()
         transaction_ids = [t.id for t in update_data.transactions]
         logger.debug(f"Transaction IDs to update: {transaction_ids}")
@@ -244,3 +260,23 @@ async def export_transactions_csv(
         logger.error(f"Error exporting transactions to CSV: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
+@router.get("/fetch_csv")
+async def export_transactions_csv(
+    user_id: str = Depends(get_current_user)
+):
+    logger.info(f"Exporting transactions to CSV for user {user_id}")
+    try:
+        transaction_service = TransactionService()
+        csv_data = await transaction_service.export_transactions_to_csv(user_id)
+        
+        return StreamingResponse(
+            iter([csv_data]),
+            media_type="text/csv",
+            headers={
+                "Content-Disposition": "attachment; filename=transactions.csv"
+            }
+        )
+    except Exception as e:
+        logger.error(f"Error exporting transactions to CSV: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
