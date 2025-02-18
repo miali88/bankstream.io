@@ -42,7 +42,11 @@ async def get_batch_status(batch_id: str, user_id: str = Depends(get_current_use
     """
     try:
         ntropy_status = await ntropy_service.get_batch_status(batch_id)
-        await reconcile_transactions(user_id)
+        
+        # Only reconcile when the batch is complete
+        if ntropy_status.status == "completed":
+            await reconcile_transactions(user_id)
+            
         return ntropy_status
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

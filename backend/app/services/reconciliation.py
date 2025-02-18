@@ -163,7 +163,7 @@ def process_transactions(df: pd.DataFrame, chart_of_accounts: list) -> pd.DataFr
     batch_size = 3
     total_batches = (len(unique_groups) + batch_size - 1) // batch_size
     
-    stop_counter = 0
+    # stop_counter = 0
     for i in range(0, len(unique_groups), batch_size):
         batch_end = min(i + batch_size, len(unique_groups))
         current_batch = (i // batch_size) + 1
@@ -201,9 +201,9 @@ def process_transactions(df: pd.DataFrame, chart_of_accounts: list) -> pd.DataFr
             logger.info(f"Reason Preview: {' '.join(reasoning.split()[:10])}...")
             logger.info("-" * 50)
 
-        stop_counter += 1
-        if stop_counter > 4:
-            break
+        # stop_counter += 1
+        # if stop_counter > 4:
+        #     break
     logger.info("Finished processing all transaction groups")
     logger.debug(f"Final DataFrame shape: {df.shape}")
     return df
@@ -229,7 +229,11 @@ async def fetch_and_prepare_transactions(user_id: str) -> pd.DataFrame:
         logger.info("Querying Supabase tables...")
         # TODO: add user_id filter to ntropy_transactions, which requires adding user_id in ntropy enrich related code 
         ntropy_response = await supabase.table('ntropy_transactions').select('*').execute()
-        gocardless_response = await supabase.table('gocardless_transactions').select('*').eq('user_id', user_id).execute()
+        gocardless_response = await supabase.table('gocardless_transactions')\
+            .select('*')\
+            .eq('user_id', user_id)\
+            .neq('coa_set_by', 'AI')\
+            .execute()
         
         logger.info(f"Retrieved {len(ntropy_response.data)} ntropy transactions")
         logger.info(f"Retrieved {len(gocardless_response.data)} gocardless transactions")
@@ -367,7 +371,7 @@ async def reconcile_transactions(user_id: str) -> pd.DataFrame:
         for _, row in df_reconciled.iterrows():
             # Ensure all values are valid before updating
             if pd.isna(row['account_id']) or pd.isna(row['coa_reason']) or pd.isna(row['coa_confidence']):
-                logger.warning(f"Skipping update for transaction {row['id']} due to missing values")
+                # logger.warning(f"Skipping update for transaction {row['id']} due to missing values")
                 updates.append(False)
                 continue
 

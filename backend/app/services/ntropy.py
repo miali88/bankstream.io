@@ -47,7 +47,7 @@ def transform_transactions_for_ntropy(
         
         # Create location object with required country field
         location = {
-            "country": tx.country or "GB"  # Default to GBR (United Kingdom) if not specified
+            "country": "GB"  # Default to GB (United Kingdom) if not specified
         }
         
         transformed_tx = EnrichedTransactionRequest(
