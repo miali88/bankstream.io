@@ -158,7 +158,7 @@ async def patch_transactions_batch(
 
 @router.get("/fetch_csv")
 async def export_transactions_csv(
-    user_id: str
+    user_id: str = Depends(get_current_user)
 ):
     logger.info(f"Exporting transactions to CSV for user {user_id}")
     try:
