@@ -53,6 +53,7 @@ itsdangerous==2.2.0
 jedi==0.19.2
 Jinja2==3.1.5
 jiter==0.8.2
+joblib==1.4.2
 jsonpatch==1.33
 jsonpointer==3.0.0
 jsonref==1.1.0
@@ -66,6 +67,7 @@ langchain-core==0.3.34
 langchain-groq==0.2.4
 langchain-openai==0.3.4
 langsmith==0.3.8
+Levenshtein==0.26.1
 markdown-it-py==3.0.0
 MarkupSafe==3.0.2
 matplotlib==3.7.5
@@ -106,10 +108,12 @@ Pysher==1.0.8
 python-dateutil==2.9.0.post0
 python-dotenv==1.0.0
 python-jose==3.3.0
+python-Levenshtein==0.26.1
 python-multipart==0.0.6
 pytz==2025.1
 PyYAML==6.0.2
 pyzmq==26.2.1
+RapidFuzz==3.12.1
 realtime==2.3.0
 referencing==0.36.2
 regex==2024.11.6
@@ -118,6 +122,7 @@ requests-toolbelt==1.0.0
 rich==13.9.4
 rpds-py==0.22.3
 rsa==4.9
+scikit-learn==1.6.1
 scipy==1.10.1
 seaborn==0.12.2
 semver==3.0.4
@@ -136,6 +141,8 @@ supafunc==0.7.0
 svix==1.56.0
 tabulate==0.9.0
 tenacity==9.0.0
+thefuzz==0.22.1
+threadpoolctl==3.5.0
 tiktoken==0.8.0
 tokenizers==0.21.0
 tornado==6.4.2

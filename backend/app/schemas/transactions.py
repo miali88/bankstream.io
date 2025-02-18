@@ -19,7 +19,7 @@ class TransactionsTable(BaseModel):
     internal_transaction_id: Optional[str] = None
     logo: Optional[str] = None
     category: Optional[str] = None
-    chart_of_account: Optional[str] = None
+    chart_of_accounts: Optional[str] = None
     category_id: Optional[str] = None
     entity: Optional[str] = None
     country: Optional[str] = None

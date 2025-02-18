@@ -12,10 +12,19 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 
+# Set docs URL based on environment
+ENVIRONMENT = os.getenv("ENVIRONMENT", "development")  # defaults to development if not set
+docs_url = "/api/v1/docs" if ENVIRONMENT == "development" else None
+redoc_url = "/api/v1/redoc" if ENVIRONMENT == "development" else None
+openapi_url = "/api/v1/openapi.json" if ENVIRONMENT == "development" else None
+
 app = FastAPI(
     title="BankStream API",
     description="API for banking and payment operations",
-    version="0.1.0"
+    version="0.1.0",
+    docs_url=docs_url,
+    redoc_url=redoc_url,
+    openapi_url=openapi_url
 )
 
 # Configure CORS

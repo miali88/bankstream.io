@@ -1,4 +1,3 @@
-
 from dotenv import load_dotenv
 import asyncio
 from typing import Dict, List
@@ -8,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sse_starlette.sse import EventSourceResponse
 from pydantic import BaseModel
 
-from app.schemas.gocardless import BuildLinkResponse, BankListResponse
+from app.schemas.gocardless import BuildLinkResponse, Bank
 from app.services import gocardless
 from app.services import agreement_monitor
 from app.core.auth import get_current_user
@@ -22,7 +21,7 @@ active_sse_connections: Dict[str, asyncio.Queue] = {}
 
 
 """ step 1, user selects country and selects their bank from the list of banks """
-@router.get("/bank_list", response_model=BankListResponse)
+@router.get("/bank_list", response_model=List[Bank])
 async def get_list_of_banks(country: str, user_id: str = Depends(get_current_user)):
     print(f"\n /list-of-banks called by user {user_id}")
     return await gocardless.fetch_list_of_banks(country)

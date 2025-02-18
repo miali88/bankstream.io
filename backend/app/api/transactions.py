@@ -8,7 +8,6 @@ import logging
 from app.services.supabase import get_supabase
 from app.core.auth import get_current_user
 from app.schemas.transactions import GetTransactions
-from app.services.reconciliation import ReconciliationService
 from app.services.transactions import TransactionService
 
 load_dotenv()
@@ -93,7 +92,6 @@ async def delete_transaction(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @router.patch("/batch")
 async def patch_transactions_batch(
     update_data: TransactionBatchUpdate,
@@ -161,22 +159,3 @@ async def patch_transactions_batch(
     except Exception as e:
         logging.error(f"Batch update failed with error: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
-
-
-
-@router.post("/reconcile")
-async def reconcile_transactions(
-    user_data: dict = Depends(get_current_user)
-):
-    """
-    Reconcile a batch of transactions against the chart of accounts using LLM.
-    """
-    try:
-        user_id = user_data.get("id")
-        reconciliation_service = ReconciliationService()
-        return await reconciliation_service.inference(user_id)
-    except Exception as e:
-        logging.error(f"Reconciliation failed: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e)) 
-    
-    

@@ -4,16 +4,23 @@ store the agreement ID, which can be used to authenticate ongoing requests with 
 the callback URL will include the ref of the agreement, this 
 """
 
-from pydantic import BaseModel
+from typing import List
+from pydantic import BaseModel, RootModel
 
-class BankListResponse(BaseModel):
+class Bank(BaseModel):
     id: str
     name: str
+    bic: str
     transaction_total_days: str
+    countries: List[str]
     logo: str
+    max_access_valid_for_days: str
+
+BankListResponse = RootModel[List[Bank]]
 
 class BuildLinkResponse(BaseModel):
     link: str
+    ref: str
 
 class GCLAccountsResponse(BaseModel):
     id: str
