@@ -18,7 +18,7 @@ router = APIRouter()
 class TransactionUpdate(BaseModel):
     id: str
     category: Optional[str] = None
-    chart_of_account: Optional[str] = None
+    chart_of_accounts: Optional[str] = None
 
 class TransactionBatchUpdate(BaseModel):
     transactions: List[TransactionUpdate]
@@ -31,11 +31,11 @@ class ReconciliationRequest(BaseModel):
 @router.post("/")
 async def create_transaction(
     transaction_data: dict,
-    user_data: dict = Depends(get_current_user)
+    user_id: str = Depends(get_current_user)
 ):
     try:
         supabase = await get_supabase()
-        transaction_data["user_id"] = user_data.get("id")
+        transaction_data["user_id"] = user_id
         result = await supabase.table("transactions").insert(transaction_data).execute()
         return result.data
     except Exception as e:
@@ -64,14 +64,14 @@ async def get_transactions(
 async def update_transaction(
     transaction_id: str,
     transaction_data: dict,
-    user_data: dict = Depends(get_current_user)
+    user_id: str = Depends(get_current_user)
 ):
     try:
         supabase = await get_supabase()
         result = await supabase.table("transactions")\
             .update(transaction_data)\
             .eq("id", transaction_id)\
-            .eq("user_id", user_data.get("id"))\
+            .eq("user_id", user_id)\
             .execute()
         return result.data
     except Exception as e:
@@ -80,14 +80,14 @@ async def update_transaction(
 @router.delete("/{transaction_id}")
 async def delete_transaction(
     transaction_id: str,
-    user_data: dict = Depends(get_current_user)
+    user_id: str = Depends(get_current_user)
 ):
     try:
         supabase = await get_supabase()
         result = await supabase.table("transactions")\
             .delete()\
             .eq("id", transaction_id)\
-            .eq("user_id", user_data.get("id"))\
+            .eq("user_id", user_id)\
             .execute()
         return {"message": "Transaction deleted successfully"}
     except Exception as e:
@@ -109,7 +109,7 @@ async def patch_transactions_batch(
             print(f"\nTransaction {idx}:")
             print(f"  ID: {transaction.id}")
             print(f"  Category: {transaction.category}")
-            print(f"  Chart of Account: {transaction.chart_of_account}")
+            print(f"  Chart of Account: {transaction.chart_of_accounts}")
             print(f"  Raw transaction data: {transaction.dict()}")
         print("\n=== End Request Details ===\n")
 

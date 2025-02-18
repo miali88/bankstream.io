@@ -16,14 +16,15 @@ const coaOptions = coaData.Accounts.map((account) => ({
   type: account.Type,
 }));
 
-// Category options
-const categoryOptions = [
-  { value: "income", label: "Income" },
-  { value: "expense", label: "Expense" },
-  { value: "transfer", label: "Transfer" },
-  { value: "investment", label: "Investment" },
-  { value: "other", label: "Other" },
-];
+// Get unique account types from CoA data for category options
+const classOptions = Array.from(
+  new Set(coaData.Accounts.map((account) => account.Type))
+)
+  .filter(Boolean) // Remove any null/undefined values
+  .map((type) => ({
+    value: type.toLowerCase(),
+    label: type,
+  }));
 
 interface ColumnProps {
   onTransactionChange?: (
@@ -92,10 +93,12 @@ export const getColumns = ({
         >
           <SelectTrigger className="w-fit min-w-[200px] whitespace-nowrap">
             <SelectValue>
-              <span className="flex items-center flex-start gap-1 w-full pr-2">
-                {showAiEmoji && <span>✨</span>}
-                {selectedAccount ? selectedAccount.label : "Select CoA"}
-              </span>
+              {selectedAccount && (
+                <span className="flex items-center flex-start gap-1 w-full pr-2">
+                  {showAiEmoji && <span>✨</span>}
+                  {selectedAccount.label}
+                </span>
+              )}
             </SelectValue>
           </SelectTrigger>
           <SelectContent className="min-w-[200px] w-fit">
@@ -120,12 +123,26 @@ export const getColumns = ({
   },
   {
     accessorKey: "category",
-    header: "Category",
+    header: "Class",
     cell: ({ row }) => {
       const transactionId = row.original.id;
+      const selectedCoaId = row.getValue("chart_of_accounts") as string;
+      
+      // Find the corresponding CoA option to get its type
+      const selectedCoaOption = coaOptions.find(opt => opt.value === selectedCoaId);
+      
+      // Use the CoA type as the default category if available
+      const defaultClass = selectedCoaOption?.type?.toLowerCase() || '';
+      
       const originalValue = row.getValue("category") as string;
-      const currentValue =
-        pendingChanges[transactionId]?.category || originalValue;
+      const currentValue = 
+        pendingChanges[transactionId]?.category || 
+        originalValue || 
+        defaultClass;
+
+      const showAiEmoji =
+        !pendingChanges[transactionId]?.category &&
+        row.original.category_set_by === "AI";
 
       return (
         <Select
@@ -135,10 +152,17 @@ export const getColumns = ({
           }}
         >
           <SelectTrigger className="w-[150px]">
-            <SelectValue placeholder="Select Category" />
+            <SelectValue>
+              {currentValue && (
+                <span className="flex items-center gap-1">
+                  {showAiEmoji && <span>✨</span>}
+                  {classOptions.find(opt => opt.value === currentValue)?.label}
+                </span>
+              )}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
-            {categoryOptions.map((option) => (
+            {classOptions.map((option) => (
               <SelectItem key={option.value} value={option.value}>
                 {option.label}
               </SelectItem>
