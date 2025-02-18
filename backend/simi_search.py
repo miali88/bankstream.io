@@ -61,8 +61,6 @@ async def main():
             'remittance_info': 'TFL TRAVEL CHARGE       TFL.GOV.UK/CP',
             'amount': -919,
             'user_id': 'user_123'""",
-        
-
     ]
 
     print("\nTesting similarity search with different queries...")

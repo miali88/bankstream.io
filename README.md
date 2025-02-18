@@ -68,10 +68,11 @@ Bankstream AI is your intelligent financial data aggregation platform that keeps
 
 ## 🗺️ Roadmap
 
-- [ ] Enhanced transaction categorization accuracy
-- [ ] Email inbox monitoring to store accounting related data.
-- [ ] Automated reconciliation
+- [ ] Automated 1 click reconciliation
 - [ ] Dashboard with financial insights
+- [ ] Self improving reconciliation that learns from user feedback
+- [ ] Email inbox monitoring to store accounting related data and match with transactions
+
 
 ## 📚 Documentation
 
