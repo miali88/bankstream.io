@@ -167,3 +167,19 @@ export async function startEnrichment(
   }
   return response.json();
 }
+
+export async function downloadTransactionsCsv(token: string): Promise<Blob> {
+  const url = buildUrl("transactions/fetch_csv");
+
+  const response = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to download transactions CSV");
+  }
+
+  return response.blob();
+}

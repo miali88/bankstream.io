@@ -17,7 +17,7 @@ import {
 } from "@remix-run/react";
 import { useEffect, useState } from "react";
 import { useToast } from "~/components/ui/use-toast";
-import { CheckCircle, Save } from "lucide-react";
+import { CheckCircle, Save, Download } from "lucide-react";
 import { redirect, json } from "@remix-run/node";
 import { getAuth } from "@clerk/remix/ssr.server";
 import type {
@@ -246,6 +246,7 @@ export default function Transactions() {
   const submit = useSubmit();
   const navigation = useNavigation();
   const actionData = useActionData<EnrichActionData>();
+  const csvFetcher = useFetcher();
 
   console.log(actionData, "KK AKKK");
 
@@ -366,6 +367,10 @@ export default function Transactions() {
     });
   };
 
+  const handleDownloadCsv = () => {
+    csvFetcher.load("/resources/download-transactions");
+  };
+
   const columns = getColumns({
     onTransactionChange: handleTransactionChange,
     pendingChanges: pendingChanges,
@@ -403,8 +408,19 @@ export default function Transactions() {
             >
               {isSubmitting ? "Loading..." : "AI Reconcile✨"}
             </Button>
-
             <AddAccountDialog />
+
+            <Button
+              variant="outline"
+              className="bg-blue-100 text-black hover:bg-blue-200"
+              onClick={handleDownloadCsv}
+              disabled={csvFetcher.state === "loading"}
+            >
+              <Download className="w-4 h-4 mr-2" />
+              {csvFetcher.state === "loading"
+                ? "Downloading..."
+                : "export as CSV"}
+            </Button>
           </div>
         </div>
         <DataTable
