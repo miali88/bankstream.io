@@ -56,7 +56,7 @@ function HeroTitles() {
           staggerChildren: 0.2,
         }}
       >
-        {["Reconcile your bank transactions", "In Minutes", "Not Days"].map(
+        {["Fetch & Reconcile Transactions", "In Minutes", "Not Days"].map(
           (text, index) => (
             <motion.span
               key={index}
