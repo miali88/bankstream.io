@@ -18,7 +18,7 @@ export interface Transactions {
   internal_transaction_id?: string;
   logo?: string;
   category?: string;
-  chart_of_account?: string;
+  chart_of_accounts?: string;
 }
 
 export type TransactionCreate = Transactions;
@@ -27,7 +27,7 @@ export type Transaction = Transactions;
 export interface TransactionUpdate {
   id: string;
   category?: string;
-  chart_of_account?: string;
+  chart_of_accounts?: string;
   // Add other optional fields that can be updated
 }
 

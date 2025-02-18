@@ -17,7 +17,7 @@ router = APIRouter()
 class TransactionUpdate(BaseModel):
     id: str
     category: Optional[str] = None
-    chart_of_account: Optional[str] = None
+    chart_of_accounts: Optional[str] = None
 
 class TransactionBatchUpdate(BaseModel):
     transactions: List[TransactionUpdate]
@@ -108,7 +108,7 @@ async def patch_transactions_batch(
             print(f"\nTransaction {idx}:")
             print(f"  ID: {transaction.id}")
             print(f"  Category: {transaction.category}")
-            print(f"  Chart of Account: {transaction.chart_of_account}")
+            print(f"  Chart of Account: {transaction.chart_of_accounts}")
             print(f"  Raw transaction data: {transaction.dict()}")
         print("\n=== End Request Details ===\n")
 

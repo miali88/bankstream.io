@@ -50,7 +50,6 @@ class TransactionService:
             .order('created_at', desc=True)
             .range(offset, offset + page_size - 1)
             .execute())
-        print("bombaclart result", result)
 
         total_count = result.count
         logger.info(f"Found {total_count} total transactions for user")

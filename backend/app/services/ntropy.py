@@ -35,7 +35,7 @@ def transform_transactions_for_ntropy(
             tx.debtor_name,
             tx.remittance_info,
             tx.code,
-            tx.chart_of_account
+            tx.chart_of_accounts
         ]))
         
         # Convert amount from integer (cents) to float (dollars)
