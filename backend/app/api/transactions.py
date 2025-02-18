@@ -4,6 +4,9 @@ from dotenv import load_dotenv
 from pydantic import BaseModel
 from typing import List, Optional
 import logging
+from fastapi.responses import StreamingResponse
+from io import StringIO
+import csv
 
 from app.services.supabase import get_supabase
 from app.core.auth import get_current_user
@@ -14,10 +17,12 @@ load_dotenv()
 
 router = APIRouter()
 
+logger = logging.getLogger(__name__)
+
 class TransactionUpdate(BaseModel):
     id: str
     category: Optional[str] = None
-    chart_of_account: Optional[str] = None
+    chart_of_accounts: Optional[str] = None
 
 class TransactionBatchUpdate(BaseModel):
     transactions: List[TransactionUpdate]
@@ -30,11 +35,11 @@ class ReconciliationRequest(BaseModel):
 @router.post("/")
 async def create_transaction(
     transaction_data: dict,
-    user_data: dict = Depends(get_current_user)
+    user_id: str = Depends(get_current_user)
 ):
     try:
         supabase = await get_supabase()
-        transaction_data["user_id"] = user_data.get("id")
+        transaction_data["user_id"] = user_id
         result = await supabase.table("transactions").insert(transaction_data).execute()
         return result.data
     except Exception as e:
@@ -63,14 +68,14 @@ async def get_transactions(
 async def update_transaction(
     transaction_id: str,
     transaction_data: dict,
-    user_data: dict = Depends(get_current_user)
+    user_id: str = Depends(get_current_user)
 ):
     try:
         supabase = await get_supabase()
         result = await supabase.table("transactions")\
             .update(transaction_data)\
             .eq("id", transaction_id)\
-            .eq("user_id", user_data.get("id"))\
+            .eq("user_id", user_id)\
             .execute()
         return result.data
     except Exception as e:
@@ -79,14 +84,14 @@ async def update_transaction(
 @router.delete("/{transaction_id}")
 async def delete_transaction(
     transaction_id: str,
-    user_data: dict = Depends(get_current_user)
+    user_id: str = Depends(get_current_user)
 ):
     try:
         supabase = await get_supabase()
         result = await supabase.table("transactions")\
             .delete()\
             .eq("id", transaction_id)\
-            .eq("user_id", user_data.get("id"))\
+            .eq("user_id", user_id)\
             .execute()
         return {"message": "Transaction deleted successfully"}
     except Exception as e:
@@ -108,7 +113,7 @@ async def patch_transactions_batch(
             print(f"\nTransaction {idx}:")
             print(f"  ID: {transaction.id}")
             print(f"  Category: {transaction.category}")
-            print(f"  Chart of Account: {transaction.chart_of_account}")
+            print(f"  Chart of Account: {transaction.chart_of_accounts}")
             print(f"  Raw transaction data: {transaction.dict()}")
         print("\n=== End Request Details ===\n")
 
@@ -158,4 +163,25 @@ async def patch_transactions_batch(
         return results
     except Exception as e:
         logging.error(f"Batch update failed with error: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/fetch_csv")
+async def export_transactions_csv(
+    user_id: str = Depends(get_current_user)
+):
+    logger.info(f"Exporting transactions to CSV for user {user_id}")
+    try:
+        transaction_service = TransactionService()
+        csv_data = await transaction_service.export_transactions_to_csv(user_id)
+        
+        return StreamingResponse(
+            iter([csv_data]),
+            media_type="text/csv",
+            headers={
+                "Content-Disposition": "attachment; filename=transactions.csv"
+            }
+        )
+    except Exception as e:
+        logger.error(f"Error exporting transactions to CSV: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
