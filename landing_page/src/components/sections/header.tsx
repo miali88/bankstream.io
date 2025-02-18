@@ -1,8 +1,6 @@
 "use client";
 
-import Drawer from "@/components/drawer";
 import { Icons } from "@/components/icons";
-import Menu from "@/components/menu";
 import { buttonVariants } from "@/components/ui/button";
 import { siteConfig } from "@/lib/config";
 import { cn } from "@/lib/utils";
@@ -38,41 +36,21 @@ export default function Header() {
         <Link
           href="/"
           title="brand-logo"
-          className="relative mr-6 flex items-center space-x-2"
+          className="relative flex items-center space-x-2"
         >
           <Icons.logo className="w-auto h-[40px]" />
           <span className="font-bold text-xl">{siteConfig.name}</span>
         </Link>
 
-        <div className="hidden lg:block">
-          <div className="flex items-center ">
-            <nav className="mr-10">
-              <Menu />
-            </nav>
-
-            <div className="gap-2 flex">
-              <Link
-                href="/login"
-                className={buttonVariants({ variant: "outline" })}
-              >
-                Login
-              </Link>
-              <Link
-                href="/signup"
-                className={cn(
-                  buttonVariants({ variant: "default" }),
-                  "w-full sm:w-auto text-background flex gap-2"
-                )}
-              >
-                <Icons.logo className="h-6 w-6" />
-                Get Started for Free
-              </Link>
-            </div>
-          </div>
-        </div>
-        <div className="mt-2 cursor-pointer block lg:hidden">
-          <Drawer />
-        </div>
+        <Link
+          href="/login"
+          className={cn(
+            buttonVariants({ variant: "default" }),
+            "text-primary-foreground"
+          )}
+        >
+          Login
+        </Link>
       </div>
       <hr
         className={cn(
