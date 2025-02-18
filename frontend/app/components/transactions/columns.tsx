@@ -10,10 +10,10 @@ import {
 import coaData from "../../../public/CoA.json";
 
 // Get COA options from the JSON file
-const coaOptions = coaData.Accounts.map(account => ({
+const coaOptions = coaData.Accounts.map((account) => ({
   value: account.AccountID,
-  label: `${account.Code || ''} - ${account.Name}`,
-  type: account.Type
+  label: `${account.Code || ""} - ${account.Name}`,
+  type: account.Type,
 }));
 
 // Category options
@@ -22,15 +22,22 @@ const categoryOptions = [
   { value: "expense", label: "Expense" },
   { value: "transfer", label: "Transfer" },
   { value: "investment", label: "Investment" },
-  { value: "other", label: "Other" }
+  { value: "other", label: "Other" },
 ];
 
 interface ColumnProps {
-  onTransactionChange?: (transactionId: string, field: string, value: string) => void;
+  onTransactionChange?: (
+    transactionId: string,
+    field: string,
+    value: string
+  ) => void;
   pendingChanges: Record<string, Record<string, string>>;
 }
 
-export const getColumns = ({ onTransactionChange, pendingChanges }: ColumnProps): ColumnDef<Transaction>[] => [
+export const getColumns = ({
+  onTransactionChange,
+  pendingChanges,
+}: ColumnProps): ColumnDef<Transaction>[] => [
   {
     accessorKey: "creditor_name",
     header: "Creditor",
@@ -64,27 +71,46 @@ export const getColumns = ({ onTransactionChange, pendingChanges }: ColumnProps)
     cell: ({ row }) => {
       const transactionId = row.original.id;
       const originalValue = row.getValue("chart_of_accounts") as string;
-      const currentValue = pendingChanges[transactionId]?.chart_of_accounts || originalValue;
-      
+      const currentValue =
+        pendingChanges[transactionId]?.chart_of_accounts || originalValue;
+      // Only show AI emoji if the value hasn't been manually changed
+      const showAiEmoji =
+        !pendingChanges[transactionId]?.chart_of_accounts &&
+        row.original.coa_set_by === "AI";
+
       // Find the matching CoA option to display the code
-      const selectedAccount = coaOptions.find(option => option.value === currentValue);
-      
+      const selectedAccount = coaOptions.find(
+        (option) => option.value === currentValue
+      );
+
       return (
-        <Select 
+        <Select
           value={currentValue}
           onValueChange={(value) => {
             onTransactionChange?.(transactionId, "chart_of_accounts", value);
           }}
         >
-          <SelectTrigger className="w-[200px]">
+          <SelectTrigger className="w-fit min-w-[200px] whitespace-nowrap">
             <SelectValue>
-              {selectedAccount ? selectedAccount.label : "Select CoA"}
+              <span className="flex items-center flex-start gap-1 w-full pr-2">
+                {showAiEmoji && <span>✨</span>}
+                {selectedAccount ? selectedAccount.label : "Select CoA"}
+              </span>
             </SelectValue>
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="min-w-[200px] w-fit">
             {coaOptions.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
+              <SelectItem
+                key={option.value}
+                value={option.value}
+                className="whitespace-nowrap"
+              >
+                <span className="flex items-center gap-1 w-full">
+                  {currentValue === option.value && showAiEmoji && (
+                    <span>✨</span>
+                  )}
+                  {option.label}
+                </span>
               </SelectItem>
             ))}
           </SelectContent>
@@ -98,10 +124,11 @@ export const getColumns = ({ onTransactionChange, pendingChanges }: ColumnProps)
     cell: ({ row }) => {
       const transactionId = row.original.id;
       const originalValue = row.getValue("category") as string;
-      const currentValue = pendingChanges[transactionId]?.category || originalValue;
-      
+      const currentValue =
+        pendingChanges[transactionId]?.category || originalValue;
+
       return (
-        <Select 
+        <Select
           value={currentValue}
           onValueChange={(value) => {
             onTransactionChange?.(transactionId, "category", value);
@@ -125,10 +152,10 @@ export const getColumns = ({ onTransactionChange, pendingChanges }: ColumnProps)
     accessorKey: "created_at",
     header: "Date",
     cell: ({ row }) => {
-      return new Date(row.getValue("created_at")).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit'
+      return new Date(row.getValue("created_at")).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
       });
     },
   },

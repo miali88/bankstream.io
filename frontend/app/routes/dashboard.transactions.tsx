@@ -401,14 +401,9 @@ export default function Transactions() {
               onClick={handleEnrichClick}
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Loading..." : "AI Enrich✨"}
+              {isSubmitting ? "Loading..." : "AI Reconcile✨"}
             </Button>
-            <Button
-              variant="outline"
-              className="bg-purple-100 text-black hover:bg-purple-200"
-            >
-              AI Reconcile✨
-            </Button>
+
             <AddAccountDialog />
           </div>
         </div>
