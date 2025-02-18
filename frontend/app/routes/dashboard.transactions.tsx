@@ -378,6 +378,21 @@ export default function Transactions() {
 
   const isSubmitting = navigation.state === "submitting";
 
+  useEffect(() => {
+    if (csvFetcher.data && csvFetcher.state === "idle") {
+      const date = new Date().toISOString().split("T")[0];
+      const blob = new Blob([csvFetcher.data.csvData], {
+        type: csvFetcher.data.contentType,
+      });
+      const dataUrl = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = dataUrl;
+      anchor.download = `transactions-${date}.csv`;
+      anchor.click();
+      URL.revokeObjectURL(dataUrl);
+    }
+  }, [csvFetcher.data, csvFetcher.state]);
+
   return (
     <div className="container mx-auto py-10">
       <ExpiringAgreementsNotification />

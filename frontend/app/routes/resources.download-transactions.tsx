@@ -1,5 +1,5 @@
 /* eslint-disable import/no-unresolved */
-import { LoaderFunction } from "@remix-run/node";
+import { LoaderFunction, json } from "@remix-run/node";
 import { getAuth } from "@clerk/remix/ssr.server";
 import { downloadTransactionsCsv } from "~/api/transactions";
 
@@ -27,9 +27,8 @@ export const loader: LoaderFunction = async (args) => {
   const token = await getToken();
   const csvBlob = await downloadTransactionsCsv(token as string);
 
-  // Format current date for filename
-  const date = new Date().toISOString().split("T")[0];
-  createAndClickDownloadableAnchorElement(csvBlob, `transactions-${date}.csv`);
-
-  return null;
+  return json({
+    csvData: await csvBlob.text(),
+    contentType: csvBlob.type,
+  });
 };
