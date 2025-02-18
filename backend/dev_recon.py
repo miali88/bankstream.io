@@ -9,6 +9,11 @@ from typing import Dict, Tuple, List
 import logging
 import json
 
+from pydantic import BaseModel
+import pandas as pd
+
+from app.services.supabase import get_supabase
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -128,13 +133,8 @@ class TransactionClassifier:
             logger.error(f"Batch classification failed: {str(e)}", exc_info=True)
             return [(f"ERROR: {str(e)}", "", 0.0)] * len(transactions)
 
-""" fetch transactions + ntropy enrich from supabase """
-from pydantic import BaseModel
-import pandas as pd
-
-from app.services.supabase import get_supabase
-
 class TransactionToLLM(BaseModel):
+    id: str
     entity_name : str
     amount : float
     remittance_info : str
@@ -163,6 +163,7 @@ def process_transactions(df: pd.DataFrame, chart_of_accounts: list) -> pd.DataFr
     batch_size = 3
     total_batches = (len(unique_groups) + batch_size - 1) // batch_size
     
+    stop_counter = 0
     for i in range(0, len(unique_groups), batch_size):
         batch_end = min(i + batch_size, len(unique_groups))
         current_batch = (i // batch_size) + 1
@@ -200,23 +201,35 @@ def process_transactions(df: pd.DataFrame, chart_of_accounts: list) -> pd.DataFr
             logger.info(f"Reason Preview: {' '.join(reasoning.split()[:10])}...")
             logger.info("-" * 50)
 
+        stop_counter += 1
+        if stop_counter > 4:
+            break
     logger.info("Finished processing all transaction groups")
     logger.debug(f"Final DataFrame shape: {df.shape}")
     return df
 
-async def fetch_and_prepare_transactions() -> pd.DataFrame:
-    """Fetch transactions from Supabase and prepare DataFrame"""
-    logger.info("Starting to fetch transactions from Supabase")
+async def fetch_and_prepare_transactions(user_id: str) -> pd.DataFrame:
+    """
+    Fetch transactions from Supabase and prepare DataFrame for a specific user
+    
+    Args:
+        user_id (str): The ID of the user whose transactions to fetch
+    
+    Returns:
+        pd.DataFrame: Prepared DataFrame with merged transaction data
+    """
+    logger.info(f"Starting to fetch transactions from Supabase for user {user_id}")
     
     try:
         # Get Supabase client
         supabase = await get_supabase()
         logger.info("Successfully connected to Supabase")
         
-        # Query both tables asynchronously
+        # Query both tables asynchronously with user_id filter
         logger.info("Querying Supabase tables...")
+        # TODO: add user_id filter to ntropy_transactions, which requires adding user_id in ntropy enrich related code 
         ntropy_response = await supabase.table('ntropy_transactions').select('*').execute()
-        gocardless_response = await supabase.table('gocardless_transactions').select('*').execute()
+        gocardless_response = await supabase.table('gocardless_transactions').select('*').eq('user_id', user_id).execute()
         
         logger.info(f"Retrieved {len(ntropy_response.data)} ntropy transactions")
         logger.info(f"Retrieved {len(gocardless_response.data)} gocardless transactions")
@@ -264,47 +277,145 @@ async def fetch_and_prepare_transactions() -> pd.DataFrame:
         logger.error("Error in fetch_and_prepare_transactions", exc_info=True)
         raise
 
-async def main():
-    """Main async function to orchestrate the reconciliation process"""
-    logger.info("Starting reconciliation process")
+async def fetch_chart_of_accounts(supabase) -> list:
+    """
+    Fetch chart of accounts from Supabase
     
+    Returns:
+        list: List of active accounts with relevant fields
+    """
+    logger.info("Fetching chart of accounts from Supabase")
     try:
-        # Load chart of accounts
-        logger.info("Loading chart of accounts from coa.json")
-        with open('coa.json', 'r') as file:
-            data = json.load(file)
+        response = await supabase.table('chart_of_accounts').select('*').eq('status', 'ACTIVE').execute()
+        accounts = response.data
         
-        # Extract only the required fields from each account
+        # Extract only the required fields and format for LLM
         parsed_accounts = [
             {
-                'code': account.get('Code', ''),
-                'name': account.get('Name', ''),
-                'type': account.get('Type', ''),
-                'description': account.get('Description', ''),
-                'class': account.get('Class', ''),
+                'code': account['code'],
+                'name': account['name'],
+                'type': account['account_type'],
+                'description': account.get('description', ''),
+                'class': account.get('account_class', ''),
             }
-            for account in data['Accounts']
-            if account.get('Status') == 'ACTIVE'
+            for account in accounts
         ]
-        logger.info(f"Loaded {len(parsed_accounts)} active accounts from CoA")
+        
+        # Create a mapping of code to accountId for later use
+        code_to_id_map = {
+            account['code']: account['account_id'] 
+            for account in accounts
+        }
+        
+        logger.info(f"Loaded {len(parsed_accounts)} active accounts from Supabase")
+        return parsed_accounts, code_to_id_map
+        
+    except Exception as e:
+        logger.error("Error fetching chart of accounts", exc_info=True)
+        raise
+
+def map_coa_codes_to_ids(df: pd.DataFrame, code_to_id_map: dict) -> pd.DataFrame:
+    """
+    Map the COA codes to their corresponding account IDs
+    
+    Args:
+        df (pd.DataFrame): DataFrame with coa_agent column containing codes
+        code_to_id_map (dict): Mapping of codes to account IDs
+    
+    Returns:
+        pd.DataFrame: DataFrame with new account_id column
+    """
+    df = df.copy()
+    df['account_id'] = df['coa_agent'].map(code_to_id_map)
+    return df
+
+async def reconcile_transactions(user_id: str) -> pd.DataFrame:
+    """
+    Main function to reconcile transactions for a specific user and save results to database
+    
+    Args:
+        user_id (str): The ID of the user whose transactions to reconcile
+    
+    Returns:
+        pd.DataFrame: DataFrame with reconciled transactions
+    """
+    logger.info(f"Starting reconciliation process for user {user_id}")
+    
+    try:
+        # Get Supabase client
+        supabase = await get_supabase()
+        
+        # Fetch chart of accounts
+        parsed_accounts, code_to_id_map = await fetch_chart_of_accounts(supabase)
         
         # Fetch and prepare transactions
         logger.info("Fetching and preparing transactions")
-        result_df = await fetch_and_prepare_transactions()
+        result_df = await fetch_and_prepare_transactions(user_id)
         logger.info(f"Retrieved {len(result_df)} transactions to process")
         
-        # Process transactions
+        # Process transactions (LLM only sees codes, not UUIDs)
         logger.info("Starting transaction processing")
         df_reconciled = process_transactions(result_df, parsed_accounts)
-        logger.info("Completed reconciliation process")
+        
+        # Map the COA codes to account IDs
+        logger.info("Mapping COA codes to account IDs")
+        df_reconciled = map_coa_codes_to_ids(df_reconciled, code_to_id_map)
+        
+        # Save reconciliation results to database
+        logger.info("Saving reconciliation results to database")
+        updates = []
+        for _, row in df_reconciled.iterrows():
+            # Ensure all values are valid before updating
+            if pd.isna(row['account_id']) or pd.isna(row['coa_reason']) or pd.isna(row['coa_confidence']):
+                logger.warning(f"Skipping update for transaction {row['id']} due to missing values")
+                updates.append(False)
+                continue
+
+            update_data = {
+                'chart_of_accounts': str(row['account_id']),  # Ensure UUID is string
+                'coa_reason': str(row['coa_reason']),        # Ensure string
+                'coa_confidence': float(row['coa_confidence']), # Ensure float
+                'coa_set_by': 'AI'
+            }
+            
+            try:
+                # Log the update data for debugging
+                logger.debug(f"Updating transaction {row['id']} with data: {update_data}")
+                
+                response = await supabase.table('gocardless_transactions')\
+                    .update(update_data)\
+                    .eq('id', row['id'])\
+                    .execute()
+                
+                # Check if update was successful
+                if response.data:
+                    updates.append(True)
+                else:
+                    logger.error(f"No data returned for transaction {row['id']}")
+                    updates.append(False)
+                    
+            except Exception as e:
+                logger.error(f"Error updating transaction {row['id']}: {str(e)}")
+                logger.error(f"Update data was: {update_data}")
+                updates.append(False)
+
+        logger.info(f"Successfully updated {sum(updates)} out of {len(updates)} transactions")
         
         return df_reconciled
         
     except Exception as e:
-        logger.error("Error in main function", exc_info=True)
+        logger.error("Error in reconcile_transactions function", exc_info=True)
         raise
 
+
+# Remove the main function and replace with new entry point
 if __name__ == "__main__":
     import asyncio
-    df_reconciled = asyncio.run(main())
-    print(df_reconciled)
+    
+    # Example usage
+    async def example():
+        user_id = "user_2szfxuKAsHFmNfGtZtfnu3Pjdi7"  # Replace with actual user ID
+        df_reconciled = await reconcile_transactions(user_id)
+        print(df_reconciled)
+    
+    asyncio.run(example())

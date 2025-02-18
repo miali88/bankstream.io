@@ -59,12 +59,12 @@ export const getColumns = ({ onTransactionChange, pendingChanges }: ColumnProps)
     header: "Description",
   },
   {
-    accessorKey: "chart_of_account",
+    accessorKey: "chart_of_accounts",
     header: "CoA",
     cell: ({ row }) => {
       const transactionId = row.original.id;
-      const originalValue = row.getValue("chart_of_account") as string;
-      const currentValue = pendingChanges[transactionId]?.chart_of_account || originalValue;
+      const originalValue = row.getValue("chart_of_accounts") as string;
+      const currentValue = pendingChanges[transactionId]?.chart_of_accounts || originalValue;
       
       // Find the matching CoA option to display the code
       const selectedAccount = coaOptions.find(option => option.value === currentValue);
@@ -73,7 +73,7 @@ export const getColumns = ({ onTransactionChange, pendingChanges }: ColumnProps)
         <Select 
           value={currentValue}
           onValueChange={(value) => {
-            onTransactionChange?.(transactionId, "chart_of_account", value);
+            onTransactionChange?.(transactionId, "chart_of_accounts", value);
           }}
         >
           <SelectTrigger className="w-[200px]">
