@@ -20,10 +20,11 @@ class TransactionsTable(BaseModel):
     logo: Optional[str] = None
     category: Optional[str] = None
     chart_of_accounts: Optional[str] = None
-    category_id: Optional[str] = None
-    entity: Optional[str] = None
-    country: Optional[str] = None
-
+    agreement_id: Optional[str] = None
+    ntropy_enrich: Optional[bool] = None
+    coa_reason: Optional[str] = None
+    coa_confidence: Optional[str] = None
+    coa_set_by: Optional[str] = None
 
     class Config:
         from_attributes = True
