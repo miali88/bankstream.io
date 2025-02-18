@@ -71,18 +71,23 @@ async def insert_chunk(
     try:
         supabase = await get_supabase()
 
-        await supabase.table('chunks').insert({
-            'parent_id': parent_id,
-            'content': content,
-            'chunk_index': chunk_index,
-            'jina_embedding': embedding,
-            'user_id': user_id,
-            'token_count': token_count,
-            "title": title
-        }).execute()
-        logger.debug(f"Successfully inserted chunk {chunk_index}")
+        # First, get the chunk id
+        result = await supabase.table('chunks').select('id').eq('parent_id', parent_id).eq('chunk_index', chunk_index).eq('user_id', user_id).execute()
+        
+        if not result.data:
+            logger.error(f"No existing chunk found for parent_id: {parent_id}, chunk_index: {chunk_index}")
+            raise Exception("Chunk not found")
+            
+        chunk_id = result.data[0]['id']
+        
+        # Update the voyage_embeddings for the specific chunk
+        await supabase.table('chunks').update({
+            'voyage_embeddings': embedding
+        }).eq('id', chunk_id).execute()
+        
+        logger.debug(f"Successfully updated voyage embeddings for chunk {chunk_index}")
     except Exception as e:
-        logger.error(f"Failed to insert chunk {chunk_index}: {str(e)}")
+        logger.error(f"Failed to update chunk {chunk_index}: {str(e)}")
         raise
 
 async def get_embedding(
@@ -136,7 +141,7 @@ async def get_voyage_embedding(text: str, input_type: Literal["document", "query
             model="voyage-finance-2",
             input_type=input_type
         )
-        return response.embeddings
+        return response.embeddings[0]
     except Exception as e:
         logger.error(f"Failed to get embedding from Voyage AI: {str(e)}")
         raise
@@ -150,7 +155,10 @@ async def process_item(item_id: str, content: str, user_id: str, title: str) -> 
     for index, chunk in enumerate(chunks):
         logger.debug(f"Processing chunk {index}/{len(chunks)}")
         try:
-            embedding, token_count = await get_embedding(chunk)
+            # Get embeddings from Voyage AI (no token count)
+            embedding = await get_voyage_embedding(text=chunk, input_type="document")
+            # Estimate token count using tiktoken (approximate)
+            token_count = count_tokens(chunk)
             await insert_chunk(
                 item_id,
                 chunk,
