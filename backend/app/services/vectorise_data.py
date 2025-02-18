@@ -3,14 +3,14 @@ from tiktoken import encoding_for_model
 import requests
 import json
 import os
-from typing import List, Tuple 
+from typing import List, Tuple, Literal
 from dotenv import load_dotenv
-
+from enum import Enum
 load_dotenv()
 
 # import spacy
 from openai import AsyncOpenAI
-
+import voyageai
 from app.services.supabase import get_supabase
 
 openai = AsyncOpenAI()
@@ -22,6 +22,22 @@ logger.setLevel(logging.DEBUG)
 
 """ CONSIDERING REMOVING SPACY """
 # nlp = spacy.load("en_core_web_md")
+
+class JinaTask(str, Enum):
+    RETRIEVAL_QUERY = "retrieval.query"
+    RETRIEVAL_PASSAGE = "retrieval.passage"
+    CLASSIFICATION = "classification"
+    TEXT_MATCHING = "text-matching"
+    SEPARATION = "separation"
+
+# Type alias for type hinting
+JinaTaskType = Literal[
+    "retrieval.query",
+    "retrieval.passage", 
+    "classification",
+    "text-matching",
+    "separation"
+]
 
 def clean_data(data: str) -> str:
     doc = nlp(data)
@@ -69,7 +85,10 @@ async def insert_chunk(
         logger.error(f"Failed to insert chunk {chunk_index}: {str(e)}")
         raise
 
-async def get_embedding(text: str) -> Tuple[List[float], int]:
+async def get_embedding(
+    text: str,
+    task: JinaTaskType = JinaTask.RETRIEVAL_PASSAGE,
+) -> list[float]:
     jina_api_key = os.getenv("JINA_API_KEY")
     if not jina_api_key:
         raise ValueError("JINA_API_KEY is not set")
@@ -82,7 +101,7 @@ async def get_embedding(text: str) -> Tuple[List[float], int]:
         }
         data = {
             "model": "jina-embeddings-v3",
-            "task": "retrieval.passage",
+            "task": task,
             "dimensions": 1024,
             "late_chunking": False,
             "embedding_type": "float",
@@ -103,6 +122,25 @@ async def get_embedding(text: str) -> Tuple[List[float], int]:
     except requests.exceptions.RequestException as e:
         logger.error(f"Failed to get embedding from Jina AI: {str(e)}")
         raise
+
+async def get_voyage_embedding(text: str, input_type: Literal["document", "query"]) -> list[float]:
+    voyage_api_key = os.getenv("VOYAGE_API_KEY")
+    if not voyage_api_key:
+        raise ValueError("VOYAGE_API_KEY is not set")
+    logger.info("Requesting embedding from Voyage AI")
+    try:
+        client = voyageai.Client(api_key=voyage_api_key)
+
+        response = client.embed(
+            texts=text,
+            model="voyage-finance-2",
+            input_type=input_type
+        )
+        return response.embeddings
+    except Exception as e:
+        logger.error(f"Failed to get embedding from Voyage AI: {str(e)}")
+        raise
+
 
 async def process_item(item_id: str, content: str, user_id: str, title: str) -> int:
     logger.info(f"Processing item {item_id} for user {user_id}")

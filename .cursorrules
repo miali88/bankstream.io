@@ -1,3 +1,3 @@
-when prompted to show tables of Supabase Database, always use the MCP tool
+when prompted to show tables of Supabase Database, always use the MCP tool. You only have read access to the database, no write access.
 
 for internet search, use the brave search api
