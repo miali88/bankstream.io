@@ -1,8 +1,12 @@
 import logging
 from pyngrok import ngrok
 
-# Configure logging
+# Configure logging for the main application
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+# Set pyngrok logger to only show WARNING and above
+pyngrok_logger = logging.getLogger("pyngrok")
+pyngrok_logger.setLevel(logging.WARNING)
 
 logging.info('Starting ngrok tunnel setup')
 
