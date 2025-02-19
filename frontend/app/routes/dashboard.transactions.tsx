@@ -38,6 +38,7 @@ interface CountryData {
 }
 
 const ALLOWED_COUNTRIES: Record<string, string> = {
+  GB: "United Kingdom",
   AT: "Austria",
   BE: "Belgium",
   BG: "Bulgaria",
@@ -62,7 +63,6 @@ const ALLOWED_COUNTRIES: Record<string, string> = {
   SI: "Slovenia",
   ES: "Spain",
   SE: "Sweden",
-  GB: "United Kingdom",
 };
 
 export const loader: LoaderFunction = async (args) => {

@@ -54,7 +54,6 @@ async def get_transactions(
             page=page,
             page_size=page_size
         )
-        print("result", result)
         return result
     except Exception as e:
         logging.error(f"Error in get_transactions: {str(e)}")

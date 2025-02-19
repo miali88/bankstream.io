@@ -138,6 +138,14 @@ async def store_requisition_data(requisition_data: dict):
     logger.info(f"Storing link data in Supabase for reference: {requisition_data.get('reference')}")
     supabase = await get_supabase()
     
+    # First verify the user exists
+    user_id = requisition_data.get('user_id')
+    if user_id:
+        user_result = await supabase.table('users').select('user_id').eq('user_id', user_id).execute()
+        if not user_result.data:
+            logger.error(f"User {user_id} not found in users table")
+            raise ValueError(f"User {user_id} not found in users table. Please ensure user exists before creating agreement.")
+    
     # Calculate expiration date (30 days from creation)
     created_date = datetime.fromisoformat(requisition_data['created'].replace('Z', '+00:00'))
     expiration_date = created_date + timedelta(days=30)
