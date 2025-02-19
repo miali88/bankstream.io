@@ -37,6 +37,34 @@ interface CountryData {
   flag: string;
 }
 
+const ALLOWED_COUNTRIES: Record<string, string> = {
+  GB: "United Kingdom",
+  AT: "Austria",
+  BE: "Belgium",
+  BG: "Bulgaria",
+  HR: "Croatia",
+  CY: "Cyprus",
+  CZ: "Czech Republic",
+  DK: "Denmark",
+  FI: "Finland",
+  FR: "France",
+  DE: "Germany",
+  HU: "Hungary",
+  IT: "Italy",
+  LU: "Luxembourg",
+  MT: "Malta",
+  NL: "Netherlands",
+  NO: "Norway",
+  PL: "Poland",
+  PT: "Portugal",
+  IE: "Republic of Ireland",
+  RO: "Romania",
+  SK: "Slovakia",
+  SI: "Slovenia",
+  ES: "Spain",
+  SE: "Sweden",
+};
+
 export const loader: LoaderFunction = async (args) => {
   const { userId, getToken } = await getAuth(args);
 
@@ -65,9 +93,10 @@ export const loader: LoaderFunction = async (args) => {
     const data = await response.json();
 
     const countries = data
+      .filter((country: CountryData) => ALLOWED_COUNTRIES[country.cca2])
       .map((country: CountryData) => ({
         code: country.cca2,
-        name: country.name.common,
+        name: ALLOWED_COUNTRIES[country.cca2],
         flag: country.flag,
       }))
       .sort((a: { name: string }, b: { name: string }) =>
@@ -220,7 +249,7 @@ export default function Transactions() {
   const csvFetcher = useFetcher();
   const loaderData = useLoaderData<typeof loader>();
 
-  console.log('Loader Data:', loaderData);
+  console.log("Loader Data:", loaderData);
 
   console.log(actionData, "KK AKKK");
 
