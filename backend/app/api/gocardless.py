@@ -102,7 +102,6 @@ async def add_account_callback(ref: str):
                 print(f"Error sending SSE notification: {str(e)}")
         else:
             print(f"No active SSE connection found for ref: {ref}")
-        
         return result
     except Exception as e:
         print(f"Error in callback: {str(e)}")

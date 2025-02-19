@@ -88,27 +88,23 @@ class NtropyService:
             self._supabase = await get_supabase()
         return self._supabase
 
-    async def get_user_transactions(self, user_id: str, limit: int = None) -> List[TransactionsTable]:
+    async def get_user_transactions(self, user_id: str) -> List[TransactionsTable]:
         """
         Fetch all transactions for a given user that haven't been enriched by Ntropy yet
         
         Args:
             user_id (str): The ID of the user
-            limit (int, optional): Maximum number of transactions to process
             
         Returns:
             List[TransactionsTable]: List of non-enriched transactions for the user
         """
-        logger.info(f"Fetching non-enriched transactions for user {user_id} with limit {limit}")
+        logger.info(f"Fetching non-enriched transactions for user {user_id}")
         supabase = await self.get_supabase()
         query = (supabase.table('gocardless_transactions')
                 .select('*')
                 .eq('user_id', user_id)
                 .or_('ntropy_enrich.is.null,ntropy_enrich.eq.false'))
-        
-        if limit is not None:
-            query = query.limit(limit)
-        
+
         result = await query.execute()
         
         if not result.data:
@@ -174,13 +170,12 @@ class NtropyService:
             
         return result.data[0]['id']
 
-    async def enrich_transactions(self, user_id: str, limit: int = None) -> BatchCreateResponse:
+    async def enrich_transactions(self, user_id: str) -> BatchCreateResponse:
         """
         Enrich all transactions for a given user using Ntropy API
         
         Args:
             user_id (str): The ID of the user
-            limit (int, optional): Maximum number of transactions to process
             
         Returns:
             BatchCreateResponse: The batch creation response containing the batch ID
@@ -191,7 +186,7 @@ class NtropyService:
         account_holder_id = await self.get_account_holder_id(user_id)
         logger.info(f"Found Ntropy account holder ID: {account_holder_id}")
             
-        transactions = await self.get_user_transactions(user_id, limit=limit)
+        transactions = await self.get_user_transactions(user_id)
         
         if not transactions:
             logger.error(f"No transactions found for user {user_id}")

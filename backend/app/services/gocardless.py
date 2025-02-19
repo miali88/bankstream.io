@@ -231,7 +231,7 @@ async def get_account_details(account_id: str, access_token: str) -> dict:
         raise
 
 async def store_account_details(account_details: dict, user_id: str, agreement_id: str):
-    """Store account details in the database."""
+    """Store account details in the database. Updates if exists, inserts if new."""
     logger.info("Storing account details in Supabase")
     try:
         supabase = await get_supabase()
@@ -243,8 +243,12 @@ async def store_account_details(account_details: dict, user_id: str, agreement_i
             'agreement_id': agreement_id
         }
         
-        result = await supabase.table('gocardless_accounts').insert(account_data).execute()
-        logger.info(f"Successfully stored account details for account {account_details.get('id')}")
+        # Use upsert operation instead of insert
+        result = await supabase.table('gocardless_accounts')\
+            .upsert(account_data)\
+            .execute()
+            
+        logger.info(f"Successfully stored/updated account details for account {account_details.get('id')}")
         return result
     except Exception as e:
         logger.error(f"Failed to store account details: {str(e)}")

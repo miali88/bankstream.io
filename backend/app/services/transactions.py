@@ -48,7 +48,6 @@ class TransactionService:
         result = await (supabase.table('gocardless_transactions')
             .select('*, ntropy_transactions(enriched_data)', count='exact')
             .eq('user_id', user_id)
-            .is_('ntropy_enrich', 'true')
             .order('created_at', desc=True)
             .range(offset, offset + page_size - 1)
             .execute())
