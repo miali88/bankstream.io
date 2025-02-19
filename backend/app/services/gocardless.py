@@ -190,23 +190,21 @@ async def add_account(reference: str):
         }
         requisition_response = requests.get(url, headers=headers)
         requisition_response.raise_for_status()
-        requisition_response = requisition_response.json()
+        requisition_data = requisition_response.json()
 
         # Get accounts and fetch their transactions
-        accounts = requisition_response['accounts']
+        accounts = requisition_data['accounts']
         logger.info(f"Found {len(accounts)} accounts for requisition")
         
         # Fetch and store account details for each account
+        agreement_id = requisition_data.get('agreement')  # Fixed: Get agreement_id from requisition_data
         for account_id in accounts:
-            agreement_id = await requisition_response.get('agreement')
             account_details = await get_account_details(account_id, access_token)
             await store_account_details(account_details, user_id, agreement_id)
         
         transactions = await get_transactions(accounts, access_token)
-
         transformed_transactions = transform_transactions(transactions['transactions']['booked'])
-
-        await store_transactions(transformed_transactions, user_id)
+        await store_transactions(transformed_transactions, user_id, agreement_id)  # Added agreement_id parameter
         
         logger.info("Successfully completed account addition and transaction retrieval")
         return transactions
