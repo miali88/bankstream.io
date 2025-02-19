@@ -36,7 +36,14 @@ interface BankInfo {
 }
 
 export function AddAccountDialog() {
-  const { countries } = useLoaderData<{ countries: CountryOption[] }>();
+  const { countries } = useLoaderData<{ 
+    countries: CountryOption[];
+    transactions: any[];
+    page: number;
+    page_size: number;
+    total_pages: number;
+    total_count: number;
+  }>();
   const actionData = useActionData<{ bankList?: BankInfo[]; link?: string; ref?: string }>();
   const [selectedCountry, setSelectedCountry] = useState<string>("");
   const [selectedBank, setSelectedBank] = useState<string>("");

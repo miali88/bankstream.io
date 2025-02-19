@@ -1,91 +1,40 @@
-# 🏦 Bankstream AI
+# Welcome to Remix!
 
-Bankstream AI is your intelligent financial data aggregation platform that keeps your accounts synchronized and enriched in real-time.
+- 📖 [Remix docs](https://remix.run/docs)
 
-## 🌟 Features
+## Development
 
-- 🔄 Real-time bank data synchronization
-- 📊 Automated transaction categorization
-- 🤖 AI-powered transaction enrichment
-- 📚 Smart accounting software integration
-- 🔍 Intelligent reconciliation
-- 🔐 Secure multi-bank connectivity
+Run the dev server:
 
-## 🛠️ Tech Stack
+```shellscript
+npm run dev
+```
 
-### Frontend
-- 🎨 Remix.js - React-based web framework
-- 🎭 Clerk - Authentication and user management
-- 💅 Tailwind CSS - Utility-first CSS framework
-- 🔷 TypeScript - Type-safe JavaScript
-- 📊 TanStack Table - Powerful table components
+## Deployment
 
-### Backend
-- ⚡ FastAPI - Modern Python web framework
-- 🔒 Supabase - PostgreSQL database
-- 🏦 GoCardless - Bank connectivity
-- 📚 Xero - Accounting integration
-- 🔗 Plaid - Financial data enrichment
-- 🤖 OpenAI - LLM for transaction analysis
+First, build your app for production:
 
-## 🚀 Getting Started
+```sh
+npm run build
+```
 
-### Frontend Setup
-1. Install dependencies:
-   ```bash
-   cd frontend
-   npm install
-   ```
+Then run the app in production mode:
 
-2. Create `.env` file:
-   ```bash
-   cp .env.example .env
-   ```
+```sh
+npm start
+```
 
-3. Start the development server:
-    ```bash
-    npm run dev
-    ```
+Now you'll need to pick a host to deploy it to.
 
-### Backend Setup
-1. Install dependencies:
-    ```bash
-    cd backend
-    python -m venv venv
-    source venv/bin/activate # On Windows: .\venv\Scripts\activate
-    ```
+### DIY
 
-2. Create `.env` file:
-    ```bash
-    cp .env.example .env
-    ```
+If you're familiar with deploying Node applications, the built-in Remix app server is production-ready.
 
-3. Start the server:
-    ```bash
-    python run_fast.py
-    ```
+Make sure to deploy the output of `npm run build`
 
+- `build/server`
+- `build/client`
 
-## 🗺️ Roadmap
+## Styling
 
-- [ ] Automated 1 click reconciliation
-- [ ] Dashboard with financial insights
-- [ ] Self improving reconciliation that learns from user feedback
-- [ ] Email inbox monitoring to store accounting related data and match with transactions
-- [ ] Auto contact creation for new entities, organisation 
-
-## 📚 Documentation
-
-- [API Documentation](http://localhost:8000/docs)
-
-## 🤝 Contributing
-
-We welcome contributions!
-
-## 📄 License
-
-This project is licensed under the GNU AFFERO GENERAL PUBLIC LICENSE - see the [LICENSE](LICENSE) file for details.
-
-## 💬 Support
-
-For support, email support@bankstream.ai or join our [Discord community](https://discord.gg/bankstream).
+This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever css framework you prefer. See the [Vite docs on css](https://vitejs.dev/guide/features.html#css) for more information.

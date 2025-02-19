@@ -65,7 +65,22 @@ const ALLOWED_COUNTRIES: Record<string, string> = {
   SE: "Sweden",
 };
 
-export const loader: LoaderFunction = async (args) => {
+type LoaderData = {
+  countries: Array<{
+    code: string;
+    name: string;
+    flag: string;
+  }>;
+  token: string;
+  transactions: Transaction[];
+  total_count: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+  error?: string;
+};
+
+export const loader: LoaderFunction = async (args): Promise<LoaderData> => {
   const { userId, getToken } = await getAuth(args);
 
   if (!userId) {
@@ -247,6 +262,9 @@ export default function Transactions() {
   const navigation = useNavigation();
   const actionData = useActionData<EnrichActionData>();
   const csvFetcher = useFetcher();
+  const loaderData = useLoaderData<typeof loader>();
+
+  console.log('Loader Data:', loaderData);
 
   console.log(actionData, "KK AKKK");
 

@@ -26,7 +26,8 @@ export default defineConfig({
     hmr: {
       port: 5190,
       overlay: true,
-      protocol: 'ws',
+      protocol: 'wss',
+      host: 'bankstream.io',
     },
     allowedHosts: [
       'internally-wise-spaniel.eu.ngrok.io',
