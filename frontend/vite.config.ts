@@ -29,6 +29,8 @@ export default defineConfig({
       protocol: 'wss',
       host: 'bankstream.io',
     },
+    host: '127.0.0.1',
+    strictPort: true,
     allowedHosts: [
       'internally-wise-spaniel.eu.ngrok.io',
       'localhost',

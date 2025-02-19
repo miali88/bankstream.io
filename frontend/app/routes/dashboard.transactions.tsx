@@ -37,50 +37,7 @@ interface CountryData {
   flag: string;
 }
 
-const ALLOWED_COUNTRIES: Record<string, string> = {
-  GB: "United Kingdom",
-  AT: "Austria",
-  BE: "Belgium",
-  BG: "Bulgaria",
-  HR: "Croatia",
-  CY: "Cyprus",
-  CZ: "Czech Republic",
-  DK: "Denmark",
-  FI: "Finland",
-  FR: "France",
-  DE: "Germany",
-  HU: "Hungary",
-  IT: "Italy",
-  LU: "Luxembourg",
-  MT: "Malta",
-  NL: "Netherlands",
-  NO: "Norway",
-  PL: "Poland",
-  PT: "Portugal",
-  IE: "Republic of Ireland",
-  RO: "Romania",
-  SK: "Slovakia",
-  SI: "Slovenia",
-  ES: "Spain",
-  SE: "Sweden",
-};
-
-type LoaderData = {
-  countries: Array<{
-    code: string;
-    name: string;
-    flag: string;
-  }>;
-  token: string;
-  transactions: Transaction[];
-  total_count: number;
-  page: number;
-  page_size: number;
-  total_pages: number;
-  error?: string;
-};
-
-export const loader: LoaderFunction = async (args): Promise<LoaderData> => {
+export const loader: LoaderFunction = async (args) => {
   const { userId, getToken } = await getAuth(args);
 
   if (!userId) {
@@ -108,10 +65,9 @@ export const loader: LoaderFunction = async (args): Promise<LoaderData> => {
     const data = await response.json();
 
     const countries = data
-      .filter((country: CountryData) => ALLOWED_COUNTRIES[country.cca2])
       .map((country: CountryData) => ({
         code: country.cca2,
-        name: ALLOWED_COUNTRIES[country.cca2],
+        name: country.name.common,
         flag: country.flag,
       }))
       .sort((a: { name: string }, b: { name: string }) =>
