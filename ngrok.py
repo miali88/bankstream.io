@@ -17,10 +17,10 @@ try:
     
     """ dynamic domain - Backend (FastAPI)"""   
     # port = 8001
-    http_tunnel_dynamic = ngrok.connect(addr=f"http://localhost:{port}")
-    logging.info(f"Backend (FastAPI) running on:\n"
-                f"  - Local: http://localhost:{port}\n"
-                f"  - Ngrok: {http_tunnel_dynamic.public_url}")
+    # http_tunnel_dynamic = ngrok.connect(addr=f"http://localhost:{port}")
+    # logging.info(f"Backend (FastAPI) running on:\n"
+    #             f"  - Local: http://localhost:{port}\n"
+    #             f"  - Ngrok: {http_tunnel_dynamic.public_url}")
 
     # """ dynamic domain"""   
     # port = 5185
