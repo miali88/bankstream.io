@@ -2,6 +2,7 @@ from dotenv import load_dotenv
 import asyncio
 from typing import Dict, List
 from datetime import datetime
+import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sse_starlette.sse import EventSourceResponse
@@ -11,6 +12,7 @@ from app.schemas.gocardless import BuildLinkResponse, Bank
 from app.services import gocardless
 from app.services import agreement_monitor
 from app.core.auth import get_current_user
+from app.core.logger import logger
 
 load_dotenv()
 
@@ -19,6 +21,7 @@ router = APIRouter()
 # Store active SSE connections by ref instead of user_id
 active_sse_connections: Dict[str, asyncio.Queue] = {}
 
+logger = logging.getLogger(__name__)
 
 """ step 1, user selects country and selects their bank from the list of banks """
 @router.get("/bank_list", response_model=List[Bank])
@@ -147,3 +150,22 @@ async def check_expiring_agreements(
         raise HTTPException(status_code=500, detail=str(e))
 
     
+@router.get("/transactions")
+async def get_transactions(user_id: str = Depends(get_current_user)):
+    """Endpoint to fetch and store transactions for a user.
+    
+    Args:
+        user_id: The authenticated user's ID (from JWT token)
+    """
+    logger.info(f"Fetching transactions for user: {user_id}")
+    try:
+        transactions = await gocardless.get_transactions(user_id)
+        logger.info(f"Retrieved {len(transactions.get('transactions', {}).get('booked', []))} transactions")
+        
+        store = await gocardless.store_transactions(transactions, user_id)
+        logger.info(f"Successfully stored transactions for user: {user_id}")
+        
+        return store
+    except Exception as e:
+        logger.error(f"Error processing transactions for user {user_id}: {str(e)}")
+        raise

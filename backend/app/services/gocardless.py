@@ -171,6 +171,7 @@ async def store_requisition_data(requisition_data: dict):
         raise
 
 """ Step 4 """
+""" entry point for adding new bank link """
 async def add_account(reference: str):
     logger.info(f"Starting account addition process for reference: {reference}")
     try:
@@ -182,29 +183,22 @@ async def add_account(reference: str):
         requisition_id = await get_requisition_id(reference)
         user_id = await get_user_id_from_reference(reference)
 
-        # Fetch requisition details to get accounts
-        url = f"https://bankaccountdata.gocardless.com/api/v2/requisitions/{requisition_id}"
-        headers = {
-            "accept": "application/json",
-            "Authorization": f"Bearer {access_token}"
-        }
-        requisition_response = requests.get(url, headers=headers)
-        requisition_response.raise_for_status()
-        requisition_data = requisition_response.json()
-
+        # Fetch requisition details
+        requisition_data = await get_requisition_data(requisition_id, access_token)
+        
         # Get accounts and fetch their transactions
         accounts = requisition_data['accounts']
         logger.info(f"Found {len(accounts)} accounts for requisition")
         
         # Fetch and store account details for each account
-        agreement_id = requisition_data.get('agreement')  # Fixed: Get agreement_id from requisition_data
+        agreement_id = requisition_data.get('agreement')
         for account_id in accounts:
             account_details = await get_account_details(account_id, access_token)
             await store_account_details(account_details, user_id, agreement_id)
         
         transactions = await get_transactions(accounts, access_token)
         transformed_transactions = transform_transactions(transactions['transactions']['booked'])
-        await store_transactions(transformed_transactions, user_id, agreement_id)  # Added agreement_id parameter
+        await store_transactions(transformed_transactions, user_id, agreement_id)
         
         logger.info("Successfully completed account addition and transaction retrieval")
         return transactions
@@ -230,6 +224,7 @@ async def get_account_details(account_id: str, access_token: str) -> dict:
         logger.error(f"Error fetching account details: {str(e)}")
         raise
 
+# TODO: add logo column to gocardless_accounts table
 async def store_account_details(account_details: dict, user_id: str, agreement_id: str):
     """Store account details in the database. Updates if exists, inserts if new."""
     logger.info("Storing account details in Supabase")
@@ -254,9 +249,41 @@ async def store_account_details(account_details: dict, user_id: str, agreement_i
         logger.error(f"Failed to store account details: {str(e)}")
         raise
 
-async def get_transactions(accounts: list, access_token: str) -> dict:
-    """Fetch transactions for a list of accounts."""
-    logger.info(f"Starting transaction retrieval for {len(accounts)} accounts")
+async def get_requisition_data(requisition_id: str, access_token: str) -> dict:
+    """Fetch requisition details from GoCardless API."""
+    logger.info(f"Fetching requisition data for requisition ID: {requisition_id}")
+    try:
+        url = f"https://bankaccountdata.gocardless.com/api/v2/requisitions/{requisition_id}"
+        headers = {
+            "accept": "application/json",
+            "Authorization": f"Bearer {access_token}"
+        }
+        requisition_response = requests.get(url, headers=headers)
+        requisition_response.raise_for_status()
+        requisition_data = requisition_response.json()
+        logger.info(f"Successfully retrieved requisition data with {len(requisition_data.get('accounts', []))} accounts")
+        return requisition_data
+    except Exception as e:
+        logger.error(f"Error fetching requisition data: {str(e)}")
+        raise
+    
+# TODO: need to ensure the bank date request is only from the last fetched date. 
+# TODO: Need to add a last fetched date column to the gocardless_accounts table
+async def get_transactions(accounts: str | list, access_token: str) -> dict:
+    """Fetch transactions for one or multiple accounts.
+    
+    Args:
+        accounts: Either a single account ID (str) or a list of account IDs
+        access_token: The GoCardless access token
+    
+    Returns:
+        dict: Aggregated transactions in the format {'transactions': {'booked': [...]}}
+    """
+    # Convert single account to list for consistent processing
+    if isinstance(accounts, str):
+        accounts = [accounts]
+    
+    logger.info(f"Starting transaction retrieval for {len(accounts)} account(s)")
     try:
         all_transactions = {
             'transactions': {
@@ -281,7 +308,7 @@ async def get_transactions(accounts: list, access_token: str) -> dict:
             if 'transactions' in accounts_transactions and 'booked' in accounts_transactions['transactions']:
                 all_transactions['transactions']['booked'].extend(accounts_transactions['transactions']['booked'])
             
-        logger.info(f"Retrieved a total of {len(all_transactions['transactions']['booked'])} transactions across all accounts")
+        logger.info(f"Retrieved a total of {len(all_transactions['transactions']['booked'])} transactions")
         return all_transactions
     except Exception as e:
         logger.error(f"Error fetching transactions: {str(e)}")
