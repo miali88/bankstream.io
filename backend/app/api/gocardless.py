@@ -151,7 +151,7 @@ async def check_expiring_agreements(
 
     
 @router.get("/transactions")
-async def get_transactions(user_id: str = Depends(get_current_user)):
+async def fetch_transactions(user_id: str = Depends(get_current_user)):
     """Endpoint to fetch and store transactions for a user.
     
     Args:
@@ -169,3 +169,4 @@ async def get_transactions(user_id: str = Depends(get_current_user)):
     except Exception as e:
         logger.error(f"Error processing transactions for user {user_id}: {str(e)}")
         raise
+

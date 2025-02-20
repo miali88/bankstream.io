@@ -12,6 +12,7 @@ class GetBankAccountsResponse(BaseModel):
     bban: str
     owner_name: str
     institution_id: str
+    logo: str
 
 @router.get("/")
 async def get_bank_accounts(
@@ -26,7 +27,8 @@ async def get_bank_accounts(
             iban=account['results'].get('iban', ''),
             bban=account['results'].get('bban', ''),
             owner_name=account['results'].get('owner_name', ''),
-            institution_id=account['results'].get('institution_id', '')
+            institution_id=account['results'].get('institution_id', ''),
+            logo=account.get('logo', '')
         )
         for account in result.data
     ]
