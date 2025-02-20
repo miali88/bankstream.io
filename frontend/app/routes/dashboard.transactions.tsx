@@ -411,15 +411,6 @@ export default function Transactions() {
           <div className="flex gap-2">
             <Button
               variant="outline"
-              className="bg-green-100 text-black hover:bg-green-200"
-              onClick={handleSaveChanges}
-              disabled={Object.keys(pendingChanges).length === 0}
-            >
-              <Save className="w-4 h-4 mr-2" />
-              Save Changes
-            </Button>
-            <Button
-              variant="outline"
               className="bg-purple-100 text-black hover:bg-purple-200"
               onClick={handleEnrichClick}
               disabled={isSubmitting}
@@ -427,7 +418,15 @@ export default function Transactions() {
               {isSubmitting ? "Loading..." : "AI Reconcile✨"}
             </Button>
             <AddAccountDialog />
-
+            <Button
+              variant="outline"
+              className="bg-green-100 text-black hover:bg-green-200"
+              onClick={handleSaveChanges}
+              disabled={Object.keys(pendingChanges).length === 0}
+            >
+              <Save className="w-4 h-4 mr-2" />
+              Save
+            </Button>
             <Button
               variant="outline"
               className="bg-blue-100 text-black hover:bg-blue-200"
@@ -437,7 +436,7 @@ export default function Transactions() {
               <Download className="w-4 h-4 mr-2" />
               {csvFetcher.state === "loading"
                 ? "Downloading..."
-                : "export as CSV"}
+                : "CSV"}
             </Button>
           </div>
         </div>

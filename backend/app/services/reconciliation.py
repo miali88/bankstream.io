@@ -9,8 +9,10 @@ from typing import Dict, Tuple, List
 import logging
 import json
 
+
 from pydantic import BaseModel
 import pandas as pd
+
 
 from app.services.supabase import get_supabase
 
@@ -27,15 +29,33 @@ load_dotenv()
 groq_model = ChatGroq(model_name="Llama-3.3-70b-Specdec")
 openai_model = ChatOpenAI(model="gpt-4o")
 
+class TransactionToLLM(BaseModel):
+    id: str
+    entity_name : str
+    amount : float
+    remittance_info : str
+    ntropy_enrich : bool
+    ntropy_entity : str
+    ntropy_category : str
+
+class CoAToLLM(BaseModel):
+    code: str
+    name: str
+    account_type: str
+    description: str
+    account_class: str
 
 class TransactionClassifier:
     def __init__(self):
         logger.info("Initializing TransactionClassifier")
         self.system_prompt = """
-        You are a helpful financial expert responsible for classifying transactions.
-        You will be given multiple transactions and a list of chart of accounts to reconcile. 
-
-        For each transaction, you must provide:
+            <coa_categorization_prompt>
+            <instructions>
+                <step>Identify the entity name from the transaction and infer what type of business it is.</step>
+                <step>Determine the purpose of the transaction based on the entity and description.</step>
+                <step>Assign a Chart of Accounts category based on UK GAAP standards.</step>
+            </instructions>
+               For each transaction, you must provide:
         1. A brief thought process and explanation of which chart of account is appropriate for this transaction
         2. The code for the most appropriate chart of account
         3. A confidence score between 0 and 1 (e.g., 0.95 for high confidence, 0.40 for low confidence)
@@ -64,6 +84,7 @@ class TransactionClassifier:
             },
           ]
         }
+            </coa_categorization_prompt>
         """
         self.last_request_time = 0
         self.rate_limit_delay = 2  # 2 seconds between requests (30 requests/minute)
@@ -88,7 +109,29 @@ class TransactionClassifier:
 
         # Format the transactions for the LLM
         transactions_prompt = f"""
-        Please classify the following transactions:
+          <context>
+            <task>Analyze business transactions to assign appropriate Chart of Accounts code. Do so under UK GAAP</task>
+            <business_info>
+                <company_name>{{company_name}}</company_name>
+                <description>{{company_description}}</description>
+                <personnel>
+                <directors>
+                    <director>Michael Ali</director>
+                    <director>Jacob Nathanial</director>
+                </directors>
+                <shareholders>
+                    <shareholder>Billy Eilson</shareholder>
+                    <shareholder>Nick Freeson</shareholder>
+                </shareholders>
+                <employees>
+                    <employee>Riley Harold</employee>
+                    <employee>Nicki Hailey</employee>
+                    <employee>Susain Boyland</employee>
+                </employees>
+                </personnel>
+            </business_info>
+            </context>
+
         Transactions: {transactions}
         
         chart of accounts: {chart_of_accounts}
@@ -133,14 +176,6 @@ class TransactionClassifier:
             logger.error(f"Batch classification failed: {str(e)}", exc_info=True)
             return [(f"ERROR: {str(e)}", "", 0.0)] * len(transactions)
 
-class TransactionToLLM(BaseModel):
-    id: str
-    entity_name : str
-    amount : float
-    remittance_info : str
-    ntropy_enrich : bool
-    ntropy_entity : str
-    ntropy_category : str
 
 def process_transactions(df: pd.DataFrame, chart_of_accounts: list) -> pd.DataFrame:
     """Process transactions grouped by remittance_info in batches of 3 groups"""
@@ -227,51 +262,72 @@ async def fetch_and_prepare_transactions(user_id: str) -> pd.DataFrame:
         
         # Query both tables asynchronously with user_id filter
         logger.info("Querying Supabase tables...")
-        # TODO: add user_id filter to ntropy_transactions, which requires adding user_id in ntropy enrich related code 
         ntropy_response = await supabase.table('ntropy_transactions').select('*').execute()
         gocardless_response = await supabase.table('gocardless_transactions')\
             .select('*')\
             .eq('user_id', user_id)\
-            .neq('coa_set_by', 'AI')\
+            .or_('coa_set_by.is.null, coa_set_by.neq.AI')\
             .execute()
         
         logger.info(f"Retrieved {len(ntropy_response.data)} ntropy transactions")
         logger.info(f"Retrieved {len(gocardless_response.data)} gocardless transactions")
+
+        # Handle empty gocardless transactions case
+        if not gocardless_response.data:
+            logger.info("No gocardless transactions to process")
+            return pd.DataFrame()  # Return empty DataFrame
         
         # Convert to DataFrames
         ntropy_df = pd.DataFrame(ntropy_response.data)
         gocardless_df = pd.DataFrame(gocardless_response.data)
-        
-        # Merge DataFrames on the specified keys
-        merged_df = pd.merge(
-            gocardless_df,
-            ntropy_df,
-            how='left',
-            left_on='id',
-            right_on='ntropy_id'
-        )
-        
-        # Create a new DataFrame with selected columns
+
+        # Create base result DataFrame from gocardless data
         result_df = pd.DataFrame({
-            'id': merged_df['id'],
-            'entity_name': merged_df.apply(
+            'id': gocardless_df['id'],
+            'entity_name': gocardless_df.apply(
                 lambda row: row['creditor_name'] if pd.notnull(row['creditor_name'])
-                else row['debtor_name'] if pd.notnull(row['debtor_name'])
-                else row['enriched_data']['entities']['counterparty']['name'] if pd.notnull(row['enriched_data'])
-                else None,
+                else row['debtor_name'],
                 axis=1
             ),
-            'amount': merged_df['amount']/100,
-            'remittance_info': merged_df['remittance_info'],
-            'ntropy_enrich': merged_df['enriched_data'].notnull(),
-            'ntropy_entity': merged_df['enriched_data'].apply(
-                lambda x: x['entities']['counterparty']['name'] if pd.notnull(x) else None
-            ),
-            'ntropy_category': merged_df['enriched_data'].apply(
-                lambda x: x['categories']['general'] if pd.notnull(x) else None
-            )
+            'amount': gocardless_df['amount']/100,
+            'remittance_info': gocardless_df['remittance_info'],
+            'ntropy_enrich': False,  # Default to False
+            'ntropy_entity': None,
+            'ntropy_category': None
         })
-        
+
+        # Only attempt merge if ntropy data exists
+        if not ntropy_df.empty:
+            try:
+                # Ensure ntropy_id column exists
+                if 'ntropy_id' not in ntropy_df.columns:
+                    logger.warning("ntropy_id column missing in ntropy transactions")
+                    return result_df
+
+                # Merge with ntropy data where available
+                ntropy_enriched = pd.merge(
+                    result_df,
+                    ntropy_df,
+                    how='left',
+                    left_on='id',
+                    right_on='ntropy_id'
+                )
+
+                # Update enrichment fields where ntropy data exists
+                mask = ntropy_enriched['enriched_data'].notna()
+                result_df.loc[mask, 'ntropy_enrich'] = True
+                result_df.loc[mask, 'ntropy_entity'] = ntropy_enriched.loc[mask, 'enriched_data'].apply(
+                    lambda x: x['entities']['counterparty']['name'] if x and 'entities' in x else None
+                )
+                result_df.loc[mask, 'ntropy_category'] = ntropy_enriched.loc[mask, 'enriched_data'].apply(
+                    lambda x: x['categories']['general'] if x and 'categories' in x else None
+                )
+
+            except Exception as e:
+                logger.error(f"Error merging with ntropy data: {e}")
+                # Continue with base gocardless data
+                pass
+
         logger.info(f"Final prepared DataFrame contains {len(result_df)} rows")
         logger.debug(f"DataFrame columns: {result_df.columns.tolist()}")
         
@@ -333,15 +389,10 @@ def map_coa_codes_to_ids(df: pd.DataFrame, code_to_id_map: dict) -> pd.DataFrame
     df['account_id'] = df['coa_agent'].map(code_to_id_map)
     return df
 
+""" entry point """
 async def reconcile_transactions(user_id: str) -> pd.DataFrame:
     """
     Main function to reconcile transactions for a specific user and save results to database
-    
-    Args:
-        user_id (str): The ID of the user whose transactions to reconcile
-    
-    Returns:
-        pd.DataFrame: DataFrame with reconciled transactions
     """
     logger.info(f"Starting reconciliation process for user {user_id}")
     
@@ -349,12 +400,18 @@ async def reconcile_transactions(user_id: str) -> pd.DataFrame:
         # Get Supabase client
         supabase = await get_supabase()
         
-        # Fetch chart of accounts
-        parsed_accounts, code_to_id_map = await fetch_chart_of_accounts(supabase)
-        
-        # Fetch and prepare transactions
+        # Fetch and prepare transactions first
         logger.info("Fetching and preparing transactions")
         result_df = await fetch_and_prepare_transactions(user_id)
+        
+        # Early return if no transactions to process
+        if result_df.empty:
+            logger.info("No transactions to reconcile")
+            return result_df
+            
+        # Fetch chart of accounts only if we have transactions
+        parsed_accounts, code_to_id_map = await fetch_chart_of_accounts(supabase)
+        
         logger.info(f"Retrieved {len(result_df)} transactions to process")
         
         # Process transactions (LLM only sees codes, not UUIDs)

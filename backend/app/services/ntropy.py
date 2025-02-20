@@ -182,27 +182,37 @@ class NtropyService:
         """
         logger.info(f"Starting transaction enrichment for user {user_id}")
         
-        # Get the Ntropy account holder ID
-        account_holder_id = await self.get_account_holder_id(user_id)
-        logger.info(f"Found Ntropy account holder ID: {account_holder_id}")
+        try:
+            # Get the Ntropy account holder ID
+            account_holder_id = await self.get_account_holder_id(user_id)
+            logger.info(f"Found Ntropy account holder ID: {account_holder_id}")
             
-        transactions = await self.get_user_transactions(user_id)
-        
-        if not transactions:
-            logger.error(f"No transactions found for user {user_id}")
-            raise ValueError("No transactions found for the user")
-        
-        logger.info(f"Transforming {len(transactions)} transactions for Ntropy enrichment")
-        ntropy_transactions = transform_transactions_for_ntropy(transactions)
-        ntropy_transactions_dict = [tx.model_dump() for tx in ntropy_transactions]
-        
-        logger.info(f"Sending batch of {len(ntropy_transactions_dict)} transactions to Ntropy")
-        response = self.sdk.batches.create(
-            operation="POST /v3/transactions",
-            data=ntropy_transactions_dict
-        )
-        logger.info(f"Successfully created Ntropy batch with ID: {response.id}")
-        return response
+            transactions = await self.get_user_transactions(user_id)
+            
+            if not transactions:
+                logger.warning(f"No transactions found for user {user_id}")
+                return None
+            
+            logger.info(f"Transforming {len(transactions)} transactions for Ntropy enrichment")
+            ntropy_transactions = transform_transactions_for_ntropy(transactions)
+            ntropy_transactions_dict = [tx.model_dump() for tx in ntropy_transactions]
+            
+            # Add error handling for batch creation
+            try:
+                logger.info(f"Sending batch of {len(ntropy_transactions_dict)} transactions to Ntropy")
+                response = self.sdk.batches.create(
+                    operation="POST /v3/transactions",
+                    data=ntropy_transactions_dict
+                )
+                logger.info(f"Successfully created Ntropy batch with ID: {response.id}")
+                return response
+            except Exception as batch_error:
+                logger.error(f"Error creating Ntropy batch: {str(batch_error)}", exc_info=True)
+                raise ValueError(f"Failed to create Ntropy batch: {str(batch_error)}")
+            
+        except Exception as e:
+            logger.error(f"Error in transaction enrichment: {str(e)}", exc_info=True)
+            raise ValueError(f"Transaction enrichment failed: {str(e)}")
 
     async def store_ntropy_transaction(self, batch_id: str, transaction_data: dict) -> dict:
         """
@@ -219,30 +229,21 @@ class NtropyService:
         try:
             supabase = await self.get_supabase()
             
+            # Add validation for transaction data
+            if not transaction_data or 'id' not in transaction_data:
+                logger.error("Invalid transaction data received")
+                raise ValueError("Invalid transaction data structure")
+            
             # Serialize the transaction data with datetime handling
-            serialized_data = json.loads(
-                json.dumps(transaction_data, default=serialize_datetime)
-            )
+            try:
+                serialized_data = json.loads(
+                    json.dumps(transaction_data, default=serialize_datetime)
+                )
+            except Exception as serialize_error:
+                logger.error(f"Error serializing transaction data: {str(serialize_error)}")
+                raise ValueError(f"Failed to serialize transaction data: {str(serialize_error)}")
             
-            # Get the transaction ID that we originally sent to Ntropy
             ntropy_tx_id = transaction_data.get('id')
-            if not ntropy_tx_id:
-                logger.error(f"Could not find Ntropy transaction ID in response: {serialized_data}")
-                raise ValueError("Missing Ntropy transaction ID in response")
-            
-            ### No longer needed, as Ntropy ID and tx id are the same
-            # # Find the original transaction using the ID we sent to Ntropy
-            # query = (supabase.table('gocardless_transactions')
-            #         .select('id')
-            #         .eq('id', ntropy_tx_id)
-            #         .limit(1))
-                
-            # result = await query.execute()
-            
-            # if not result.data:
-            #     logger.error(f"Could not find matching transaction for Ntropy ID: {ntropy_tx_id}")
-            #     raise ValueError(f"No matching transaction found for Ntropy ID: {ntropy_tx_id}")  
-            # transaction_id = result.data[0]['id']
             
             # Store enriched data in ntropy_transactions table
             ntropy_data = {
@@ -251,17 +252,22 @@ class NtropyService:
                 'enriched_data': serialized_data,
                 'status': 'completed'
             }
-            logger.debug(f"Inserting enriched data into ntropy_transactions table for transaction {ntropy_tx_id}")
-            ntropy_result = await supabase.table('ntropy_transactions').insert(ntropy_data).execute()
             
-            # Update the ntropy_enrich flag in the transactions table
-            logger.debug(f"Updating ntropy_enrich flag for transaction {ntropy_tx_id}")
-            await supabase.table('gocardless_transactions').update({
-                'ntropy_enrich': True
-            }).eq('id', ntropy_tx_id).execute()
+            # Add transaction to both tables in a try-except block
+            try:
+                logger.debug(f"Inserting enriched data into ntropy_transactions table for transaction {ntropy_tx_id}")
+                ntropy_result = await supabase.table('ntropy_transactions').insert(ntropy_data).execute()
+                
+                logger.debug(f"Updating ntropy_enrich flag for transaction {ntropy_tx_id}")
+                await supabase.table('gocardless_transactions').update({
+                    'ntropy_enrich': True
+                }).eq('id', ntropy_tx_id).execute()
+                
+                return ntropy_result.data[0]
+            except Exception as db_error:
+                logger.error(f"Database error while storing transaction: {str(db_error)}")
+                raise ValueError(f"Failed to store transaction in database: {str(db_error)}")
             
-            logger.info(f"Successfully stored enriched transaction data for {ntropy_tx_id}")
-            return ntropy_result.data[0]
         except Exception as e:
             logger.error(f"Failed to store Ntropy transaction: {str(e)}", exc_info=True)
             raise ValueError(f"Failed to store Ntropy transaction: {str(e)}")
