@@ -15,7 +15,7 @@ class GetBankAccountsResponse(BaseModel):
 
 @router.get("/")
 async def get_bank_accounts(
-    user_id: str
+    user_id: str = Depends(get_current_user)
 ) -> List[GetBankAccountsResponse]:
     supabase = await get_supabase()
     result = await supabase.table('gocardless_accounts').select('*').eq('user_id', user_id).execute()

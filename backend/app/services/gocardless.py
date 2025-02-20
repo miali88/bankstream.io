@@ -224,18 +224,30 @@ async def get_account_details(account_id: str, access_token: str) -> dict:
         logger.error(f"Error fetching account details: {str(e)}")
         raise
 
-# TODO: add logo column to gocardless_accounts table
 async def store_account_details(account_details: dict, user_id: str, agreement_id: str):
     """Store account details in the database. Updates if exists, inserts if new."""
     logger.info("Storing account details in Supabase")
     try:
         supabase = await get_supabase()
         
+        # Get access token for logo fetch
+        access_token = await get_access_token()
+        access_token = access_token['access']
+        
+        # Get institution ID from account details
+        institution_id = account_details.get('institution_id')
+        
+        # Fetch logo if we have an institution ID
+        logo_url = None
+        if institution_id:
+            logo_url = await get_institution_logo(institution_id, access_token)
+        
         account_data = {
             'id': account_details.get('id'),
             'user_id': user_id,
             'results': account_details,
-            'agreement_id': agreement_id
+            'agreement_id': agreement_id,
+            'logo': logo_url  # Add the logo URL to the stored data
         }
         
         # Use upsert operation instead of insert
@@ -248,6 +260,25 @@ async def store_account_details(account_details: dict, user_id: str, agreement_i
     except Exception as e:
         logger.error(f"Failed to store account details: {str(e)}")
         raise
+
+async def get_institution_logo(institution_id: str, access_token: str) -> str:
+    """Fetch the logo URL for a given institution."""
+    logger.info(f"Fetching logo for institution: {institution_id}")
+    try:
+        url = f"https://bankaccountdata.gocardless.com/api/v2/institutions/{institution_id}"
+        headers = {
+            "accept": "application/json",
+            "Authorization": f"Bearer {access_token}"
+        }
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+        institution_data = response.json()
+        logo_url = institution_data.get('logo')
+        logger.info(f"Successfully retrieved logo for institution {institution_id}")
+        return logo_url
+    except Exception as e:
+        logger.error(f"Error fetching institution logo: {str(e)}")
+        return None
 
 async def get_requisition_data(requisition_id: str, access_token: str) -> dict:
     """Fetch requisition details from GoCardless API."""
