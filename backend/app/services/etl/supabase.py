@@ -1,9 +1,10 @@
-from supabase._async.client import AsyncClient
 import os
 from dotenv import load_dotenv
 import logging
 from typing import Optional
 import asyncio
+
+from supabase._async.client import AsyncClient
 
 load_dotenv()
 

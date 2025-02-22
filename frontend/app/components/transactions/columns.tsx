@@ -173,13 +173,14 @@ export const getColumns = ({
     },
   },
   {
-    accessorKey: "created_at",
+    accessorKey: "booking_date",
     header: "Date",
     cell: ({ row }) => {
-      return new Date(row.getValue("created_at")).toLocaleDateString("en-US", {
+      const date = row.getValue("booking_date") || row.getValue("created_at"); // Fallback to created_at if booking_date is not available
+      return new Date(date as string).toLocaleDateString("en-GB", {
         year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
+        month: "short",
+        day: "numeric",
       });
     },
   },

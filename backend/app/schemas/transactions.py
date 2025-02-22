@@ -1,10 +1,11 @@
 from pydantic import BaseModel, Field
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, Dict, Union
 from decimal import Decimal
 
 class TransactionsTable(BaseModel):
     id: str = Field(..., max_length=100)
+    booking_date: datetime
     user_id: str
     creditor_name: Optional[str] = None
     debtor_name: Optional[str] = None
@@ -26,7 +27,7 @@ class TransactionsTable(BaseModel):
     coa_reason: Optional[str] = None
     coa_confidence: Optional[float] = None
     coa_set_by: Optional[str] = None
-    metadata: Optional[dict] = None
+
 
     class Config:
         from_attributes = True
@@ -44,3 +45,17 @@ class GetTransactions(BaseModel):
 
 class TransactionCreate(TransactionsTable):
     pass
+
+# TODO: store data as timeseries 
+class Insights(BaseModel):
+    spending_by_category: List[Dict[str, Union[str, float]]]  # [{ "category": "SaaS", "amount": 2000.0 }]
+    spending_by_entity: List[Dict[str, Union[str, float]]]  # [{ "entity": "AWS", "amount": 2000.0 }]
+    # burn_rate: float  # Net burn rate per month
+    # revenue: float  # Monthly revenue
+    # net_cashflow: float  # revenue - expenses
+    # runway: float  # Months left before running out of cash
+    # top_vendors: List[Dict[str, float]]  # [{ "vendor": "AWS", "amount": 5000.0 }]
+    # largest_transactions: List[Dict[str, float]]  # [{ "description": "Office Rent", "amount": 4000.0 }]
+    # average_transaction_size: float  # Average transaction amount
+    # transactions_count: int  # Number of transactions processed in the period
+

@@ -64,6 +64,17 @@ export interface BatchCreateResponse {
   request_id: string;
 }
 
+export interface InsightData {
+  spending_by_category: Array<{
+    category: string;
+    amount: number;
+  }>;
+  spending_by_entity: Array<{
+    entity: string;
+    amount: number;
+  }>;
+}
+
 async function checkEnrichmentStatus(
   token: string,
   batchId: string,
@@ -183,3 +194,21 @@ export async function downloadTransactionsCsv(token: string): Promise<Blob> {
 
   return response.blob();
 }
+
+export const fetchInsights = async (token: string | null): Promise<InsightData> => {
+  if (!token) {
+    throw new Error("Authentication token not found");
+  }
+
+  const response = await fetch(buildUrl("transactions/insights"), {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch insights: ${response.status}`);
+  }
+
+  return response.json();
+};

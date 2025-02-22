@@ -20,7 +20,8 @@ export default function TransactionChart({ data }: ChartProps) {
   
   // Group transactions by month and type (expense/revenue)
   const groupedData = transactions.reduce((acc, transaction) => {
-    const date = new Date(transaction.created_at);
+    // Use booking_date with fallback to created_at
+    const date = new Date(transaction.booking_date || transaction.created_at);
     const period = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
     const amount = (transaction.amount || 0) / 100; // Divide by 100 to convert from cents
     
@@ -54,8 +55,18 @@ export default function TransactionChart({ data }: ChartProps) {
       },
       formatter: (params: any) => {
         const period = params[0].axisValue;
-        const expenses = groupedData[period].expenses.toFixed(2);
-        const revenue = groupedData[period].revenue.toFixed(2);
+        const expenses = new Intl.NumberFormat('en-GB', {
+          style: 'currency',
+          currency: 'GBP',
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }).format(groupedData[period].expenses);
+        const revenue = new Intl.NumberFormat('en-GB', {
+          style: 'currency',
+          currency: 'GBP',
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }).format(groupedData[period].revenue);
         return `${period}<br/>Revenue: ${revenue}<br/>Expenses: ${expenses}`;
       }
     },
@@ -77,9 +88,9 @@ export default function TransactionChart({ data }: ChartProps) {
       type: 'value',
       axisLabel: {
         formatter: (value: number) => {
-          return new Intl.NumberFormat('en-US', {
+          return new Intl.NumberFormat('en-GB', {
             style: 'currency',
-            currency: 'EUR',
+            currency: 'GBP',
             minimumFractionDigits: 0,
             maximumFractionDigits: 0,
           }).format(value);

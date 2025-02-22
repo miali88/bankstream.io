@@ -8,7 +8,7 @@ from fastapi.responses import StreamingResponse
 
 from backend.app.services.etl.supabase import get_supabase
 from app.core.auth import get_current_user
-from app.schemas.transactions import GetTransactions
+from app.schemas.transactions import GetTransactions, Insights
 from app.services.transactions import TransactionService
 
 load_dotenv()
@@ -182,4 +182,18 @@ async def export_transactions_csv(
     except Exception as e:
         logging.error(f"Error exporting transactions to CSV: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/insights", response_model=Insights)
+async def get_insights(
+    user_id: str = Depends(get_current_user)
+) -> Insights:
+    try:
+        transaction_service = TransactionService()
+        insights = await transaction_service.get_insights(user_id)
+        return insights
+    except Exception as e:
+        logging.error(f"Error getting insights: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+    
+
 

@@ -6,8 +6,7 @@ import logging
 import uuid  # Add UUID import
 from datetime import datetime, timedelta
 
-from backend.app.services.etl.supabase import get_supabase
-from app.services.sample_data import sample_transactions
+from app.services.etl.supabase import get_supabase
 
 import json
 load_dotenv()
@@ -411,13 +410,14 @@ async def store_transactions(transactions: dict, user_id: str, agreement_id: str
     # Map the transaction fields to match database schema
     formatted_transactions = []
     for transaction in transactions:
+        entity_name = transaction.get("creditorName") if transaction.get("amount") < 0 else transaction.get("debtorName")
         formatted_transaction = {
             'id': transaction['id'],  # UUID primary key
+            'booking_date': transaction.get('bookingDate'),
             'transaction_id': transaction.get('transaction_id'),
             'internal_transaction_id': transaction.get('internal_transaction_id'),
             'user_id': user_id,
-            'creditor_name': transaction.get('creditorName'),
-            'debtor_name': transaction.get('debtorName'),
+            'entity_name': entity_name,
             'amount': transaction.get('amount'),
             'currency': transaction.get('currency'),
             'remittance_info': transaction.get('remittanceInformationUnstructured'),

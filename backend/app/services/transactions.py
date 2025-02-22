@@ -1,9 +1,10 @@
 from typing import Dict
 import logging
-from backend.app.services.etl.supabase import get_supabase
 import csv
 from io import StringIO
 
+from app.services.etl.supabase import get_supabase
+from app.schemas.transactions import Insights
 logger = logging.getLogger(__name__)
 
 class TransactionService:
@@ -165,3 +166,77 @@ class TransactionService:
         logger.info("CSV export completed successfully")
         return output.getvalue() 
     
+    
+    async def get_insights(self, user_id: str) -> Insights:
+        """
+        Get insights for a user by calculating spending by category and entity
+        
+        Args:
+            user_id (str): The ID of the user
+            
+        Returns:
+            Insights: Object containing spending breakdowns by category and entity
+        """
+        logger.info(f"Calculating insights for user {user_id}")
+        
+        try:
+            # Get transactions with enriched data
+            supabase = await self.get_supabase()
+            result = await supabase.table("gocardless_transactions")\
+                .select("*, ntropy_transactions!inner(enriched_data)")\
+                .eq("user_id", user_id)\
+                .execute()
+
+            transactions = result.data
+            logger.info(f"Found {len(transactions)} transactions to analyze")
+
+            # Initialize dictionaries to store category and entity totals
+            category_totals = {}
+            entity_totals = {}
+
+            # Process each transaction
+            for tx in transactions:
+                amount = float(tx.get('amount', 0))
+                amount = amount / 100  # Convert to dollars
+                
+                # Process category spending
+                categories = tx.get('llm_category', {})
+                category = categories.get('category') if isinstance(categories, dict) else categories
+                
+                if category:
+                    logger.debug(f"Adding amount {amount} to category {category}")
+                    category_totals[category] = category_totals.get(category, 0) + amount
+
+                # Process entity spending
+                entity_name = tx.get('ntropy_entity')
+                if entity_name:
+                    logger.debug(f"Adding amount {amount} to entity {entity_name}")
+                    entity_totals[entity_name] = entity_totals.get(entity_name, 0) + amount
+
+            # Convert dictionaries to lists of dictionaries as per the model
+            spending_by_category = [
+                {"category": str(cat), "amount": round(float(amount), 2)}  # Ensure types match schema
+                for cat, amount in category_totals.items()
+                if cat is not None  # Skip None categories
+            ]
+            
+            spending_by_entity = [
+                {"entity": str(ent), "amount": round(float(amount), 2)}  # Ensure types match schema
+                for ent, amount in entity_totals.items()
+                if ent is not None  # Skip None entities
+            ]
+
+            # Sort both lists by amount in descending order
+            spending_by_category.sort(key=lambda x: x["amount"], reverse=True)
+            spending_by_entity.sort(key=lambda x: x["amount"], reverse=True)
+
+            logger.info(f"Successfully calculated insights: {len(spending_by_category)} categories, {len(spending_by_entity)} entities")
+            
+            return Insights(
+                spending_by_category=spending_by_category,
+                spending_by_entity=spending_by_entity
+            )
+
+        except Exception as e:
+            logger.error(f"Error calculating insights: {str(e)}", exc_info=True)
+            raise

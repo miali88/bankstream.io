@@ -1,10 +1,12 @@
 import TransactionChart from "~/components/hub/chart";
+import Insights from "~/components/hub/insights";
 import { json, redirect } from "@remix-run/node";
 import { useLoaderData, useSearchParams } from "@remix-run/react";
 import type { LoaderFunction } from "@remix-run/node";
 import { getAuth } from "@clerk/remix/ssr.server";
 import type { TransactionDataResponse } from "~/types/TransactionDataResponse";
 import { config } from "~/config.server";
+import { fetchInsights, type InsightData } from "~/api/transactions";
 
 // Mark this route as client-only
 export const handle = { hydrate: true };
@@ -13,16 +15,19 @@ export const loader: LoaderFunction = async (args) => {
   const { userId, getToken } = await getAuth(args);
   const url = new URL(args.request.url);
   const page = parseInt(url.searchParams.get("page") || "1", 10);
-  const page_size = parseInt(url.searchParams.get("page_size") || "100", 10); // Default to 100 for chart data
+  const page_size = parseInt(url.searchParams.get("page_size") || "100", 10);
 
   if (!userId) {
     return redirect("/sign-in");
   }
 
   const token = await getToken();
+  let transactionData = null;
+  let insightData = null;
+  let error = null;
 
   try {
-    // Ensure trailing slash and handle redirects
+    // Fetch transactions
     const apiUrl = `${config.apiBaseUrl}/transactions/`;
     console.log("Fetching transactions from:", apiUrl);
 
@@ -32,7 +37,7 @@ export const loader: LoaderFunction = async (args) => {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-        redirect: "follow", // Explicitly follow redirects
+        redirect: "follow",
       }
     );
 
@@ -49,52 +54,53 @@ export const loader: LoaderFunction = async (args) => {
       );
     }
 
-    const data: TransactionDataResponse = await response.json();
-    console.log("Received transaction data:", {
-      count: data.transactions?.length,
-      totalCount: data.total_count,
-      page: data.page,
-      totalPages: data.total_pages,
-    });
+    transactionData = await response.json();
+    
+    // Fetch insights
+    insightData = await fetchInsights(token);
 
-    if (!data.transactions || !Array.isArray(data.transactions)) {
-      console.error("Invalid transaction data format:", data);
-      throw new Error("Invalid transaction data format");
-    }
-
-    return json({
-      data,
-      page,
-      page_size,
-    });
-  } catch (error) {
-    console.error("Error fetching transactions:", error);
-    return json({
-      data: {
-        transactions: [],
-        total_count: 0,
-        page: page,
-        page_size: page_size,
-        total_pages: 0,
-      },
-      error:
-        error instanceof Error ? error.message : "Failed to fetch transactions",
-    });
+  } catch (err) {
+    console.error("Error fetching data:", err);
+    error = err instanceof Error ? err.message : "Failed to fetch data";
+    
+    // Set default empty data structures
+    transactionData = {
+      transactions: [],
+      total_count: 0,
+      page: page,
+      page_size: page_size,
+      total_pages: 0,
+    };
+    insightData = {
+      spending_by_category: [],
+      spending_by_entity: [],
+    };
   }
+
+  return json({
+    data: transactionData,
+    insights: insightData,
+    error,
+    page,
+    page_size,
+  });
 };
 
 export default function Charts() {
-  const { data, error } = useLoaderData<typeof loader>();
+  const { data, insights, error } = useLoaderData<typeof loader>();
   const [searchParams] = useSearchParams();
 
-  console.log("Rendering chart with data:", {
-    hasData: data?.transactions?.length > 0,
+  console.log("Rendering hub with data:", {
+    hasTransactionData: data?.transactions?.length > 0,
+    hasInsightData: insights != null,
     error,
   });
 
   return (
-    <div>
+    <div className="space-y-6">
       <h2 className="text-xl font-semibold mb-4">Financial Hub</h2>
+
+      {/* Chart Section */}
       <div className="bg-white rounded-lg shadow p-4">
         {error ? (
           <div className="text-red-500 p-4 text-center">{error}</div>
@@ -106,6 +112,15 @@ export default function Charts() {
           <TransactionChart data={data} />
         )}
       </div>
+
+      
+      {/* Insights Section */}
+      {insights && (
+        <div className="mb-8">
+          <Insights data={insights} />
+        </div>
+      )}
+
     </div>
   );
 }
