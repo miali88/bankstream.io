@@ -1,0 +1,35 @@
+2025-02-21 17:52:46,099 - INFO - Starting invoice processing
+2025-02-21 17:52:46,101 - INFO - Found 54 PDF files to process
+2025-02-21 17:52:46,127 - INFO - Processing file: INV286393562_A23511491_12262024.pdf
+2025-02-21 17:52:46,127 - INFO - Starting to process PDF: invoices/INV286393562_A23511491_12262024.pdf
+2025-02-21 17:52:46,383 - INFO - Successfully converted PDF to 1 images
+2025-02-21 17:52:46,383 - INFO - Processing batch 1 of 1
+2025-02-21 17:52:46,388 - ERROR - Error processing PDF invoices/INV286393562_A23511491_12262024.pdf
+2025-02-21 17:52:46,388 - ERROR - Error processing INV286393562_A23511491_12262024.pdf: image file is truncated (1939 bytes not processed)
+2025-02-21 17:52:46,389 - INFO - Processing file: INV290518072_A23511491_01262025.pdf
+2025-02-21 17:52:46,389 - INFO - Starting to process PDF: invoices/INV290518072_A23511491_01262025.pdf
+2025-02-21 18:20:23,407 - INFO - Starting invoice processing
+2025-02-21 18:20:23,408 - INFO - Found 54 PDF files to process
+2025-02-21 18:20:23,422 - INFO - Processing file: INV286393562_A23511491_12262024.pdf
+2025-02-21 18:20:23,422 - INFO - Starting to process PDF: invoices/INV286393562_A23511491_12262024.pdf
+2025-02-21 18:20:23,782 - INFO - Successfully converted PDF to 2 images
+2025-02-21 18:20:23,782 - INFO - Processing batch 1 of 1
+2025-02-21 18:20:24,226 - INFO - Sending request to OpenAI API
+2025-02-21 18:20:24,242 - INFO - Sending request to OpenAI API
+2025-02-21 18:20:30,557 - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-02-21 18:20:30,566 - INFO - Received response from OpenAI
+2025-02-21 18:20:32,860 - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-02-21 18:20:32,862 - INFO - Received response from OpenAI
+2025-02-21 18:20:32,865 - INFO - Preparing to save invoice data to Supabase
+2025-02-21 18:20:33,164 - INFO - HTTP Request: POST https://lvhbpccylcxeehgxtrwv.supabase.co/rest/v1/invoices "HTTP/2 201 Created"
+2025-02-21 18:20:33,170 - INFO - Successfully saved invoice to Supabase with ID: 8c13870b-4a20-43ff-8946-5432dc81afde
+2025-02-21 18:20:33,170 - INFO - Preparing to save invoice data to Supabase
+2025-02-21 18:20:33,281 - INFO - HTTP Request: POST https://lvhbpccylcxeehgxtrwv.supabase.co/rest/v1/invoices "HTTP/2 201 Created"
+2025-02-21 18:20:33,282 - INFO - Successfully saved invoice to Supabase with ID: 2f07bbfa-4849-4cbf-93d7-30c182758762
+2025-02-21 18:20:33,282 - INFO - Successfully processed: INV286393562_A23511491_12262024.pdf
+2025-02-21 18:20:33,282 - INFO - Processing file: INV290518072_A23511491_01262025.pdf
+2025-02-21 18:20:33,282 - INFO - Starting to process PDF: invoices/INV290518072_A23511491_01262025.pdf
+2025-02-21 18:20:33,628 - INFO - Successfully converted PDF to 2 images
+2025-02-21 18:20:33,628 - INFO - Processing batch 1 of 1
+2025-02-21 18:20:34,072 - INFO - Sending request to OpenAI API
+2025-02-21 18:20:34,085 - INFO - Sending request to OpenAI API

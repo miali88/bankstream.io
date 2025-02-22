@@ -6,7 +6,7 @@ import logging
 import uuid  # Add UUID import
 from datetime import datetime, timedelta
 
-from app.services.supabase import get_supabase
+from backend.app.services.etl.supabase import get_supabase
 from app.services.sample_data import sample_transactions
 
 import json

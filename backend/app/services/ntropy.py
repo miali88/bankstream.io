@@ -1,10 +1,11 @@
+import os
 import logging
 from typing import List
 from datetime import datetime
 import json
 
 from ntropy_sdk import SDK
-from app.services.supabase import get_supabase
+from app.services.etl.supabase import get_supabase
 
 from app.schemas.transactions import TransactionsTable
 from app.schemas.ntropy import EnrichedTransactionRequest
@@ -29,13 +30,13 @@ def transform_transactions_for_ntropy(
     
     for tx in transactions:
         logger.debug(f"Transforming transaction {tx.id}")
+        # Get the party name (either creditor or debtor, but not both)
+        entity_name = tx.creditor_name if tx.creditor_name else tx.debtor_name
+
         # Construct description from available fields
         description = " ".join(filter(None, [
-            tx.creditor_name,
-            tx.debtor_name,
+            entity_name,
             tx.remittance_info,
-            tx.code,
-            tx.chart_of_accounts
         ]))
         
         # Convert amount from integer (cents) to float (dollars)
@@ -73,11 +74,12 @@ def serialize_datetime(obj):
     raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
 
 class NtropyService:
-    def __init__(self, api_key: str):
+    def __init__(self):
         logger.info("Initializing NtropyService")
+        api_key = os.getenv("NTROPY_API_KEY")
         if not api_key:
-            logger.error("Ntropy API key not configured")
-            raise ValueError("Ntropy API key not configured")
+            logger.error("NTROPY_API_KEY environment variable not configured")
+            raise ValueError("NTROPY_API_KEY environment variable not configured")
         self.sdk = SDK(api_key)
         self._supabase = None
         logger.info("NtropyService initialized successfully")
@@ -169,50 +171,6 @@ class NtropyService:
             return await self.create_account_holder(user_id)
             
         return result.data[0]['id']
-
-    async def enrich_transactions(self, user_id: str) -> BatchCreateResponse:
-        """
-        Enrich all transactions for a given user using Ntropy API
-        
-        Args:
-            user_id (str): The ID of the user
-            
-        Returns:
-            BatchCreateResponse: The batch creation response containing the batch ID
-        """
-        logger.info(f"Starting transaction enrichment for user {user_id}")
-        
-        try:
-            # Get the Ntropy account holder ID
-            account_holder_id = await self.get_account_holder_id(user_id)
-            logger.info(f"Found Ntropy account holder ID: {account_holder_id}")
-            
-            transactions = await self.get_user_transactions(user_id)
-            
-            if not transactions:
-                logger.warning(f"No transactions found for user {user_id}")
-                return None
-            
-            logger.info(f"Transforming {len(transactions)} transactions for Ntropy enrichment")
-            ntropy_transactions = transform_transactions_for_ntropy(transactions)
-            ntropy_transactions_dict = [tx.model_dump() for tx in ntropy_transactions]
-            
-            # Add error handling for batch creation
-            try:
-                logger.info(f"Sending batch of {len(ntropy_transactions_dict)} transactions to Ntropy")
-                response = self.sdk.batches.create(
-                    operation="POST /v3/transactions",
-                    data=ntropy_transactions_dict
-                )
-                logger.info(f"Successfully created Ntropy batch with ID: {response.id}")
-                return response
-            except Exception as batch_error:
-                logger.error(f"Error creating Ntropy batch: {str(batch_error)}", exc_info=True)
-                raise ValueError(f"Failed to create Ntropy batch: {str(batch_error)}")
-            
-        except Exception as e:
-            logger.error(f"Error in transaction enrichment: {str(e)}", exc_info=True)
-            raise ValueError(f"Transaction enrichment failed: {str(e)}")
 
     async def store_ntropy_transaction(self, batch_id: str, transaction_data: dict) -> dict:
         """
@@ -319,3 +277,48 @@ class NtropyService:
                 "progress": batch.progress,
                 "total": batch.total
             }
+
+    """ entry point """
+    async def enrich_transactions(self, user_id: str) -> BatchCreateResponse:
+        """
+        Enrich all transactions for a given user using Ntropy API
+        
+        Args:
+            user_id (str): The ID of the user
+            
+        Returns:
+            BatchCreateResponse: The batch creation response containing the batch ID
+        """
+        logger.info(f"Starting transaction enrichment for user {user_id}")
+        
+        try:
+            # Get the Ntropy account holder ID
+            account_holder_id = await self.get_account_holder_id(user_id)
+            logger.info(f"Found Ntropy account holder ID: {account_holder_id}")
+            
+            transactions = await self.get_user_transactions(user_id)
+            
+            if not transactions:
+                logger.warning(f"No transactions found for user {user_id}")
+                return None
+            
+            logger.info(f"Transforming {len(transactions)} transactions for Ntropy enrichment")
+            ntropy_transactions = transform_transactions_for_ntropy(transactions)
+            ntropy_transactions_dict = [tx.model_dump() for tx in ntropy_transactions]
+            
+            # Add error handling for batch creation
+            try:
+                logger.info(f"Sending batch of {len(ntropy_transactions_dict)} transactions to Ntropy")
+                response = self.sdk.batches.create(
+                    operation="POST /v3/transactions",
+                    data=ntropy_transactions_dict
+                )
+                logger.info(f"Successfully created Ntropy batch with ID: {response.id}")
+                return response
+            except Exception as batch_error:
+                logger.error(f"Error creating Ntropy batch: {str(batch_error)}", exc_info=True)
+                raise ValueError(f"Failed to create Ntropy batch: {str(batch_error)}")
+            
+        except Exception as e:
+            logger.error(f"Error in transaction enrichment: {str(e)}", exc_info=True)
+            raise ValueError(f"Transaction enrichment failed: {str(e)}")

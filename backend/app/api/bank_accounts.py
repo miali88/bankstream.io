@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from typing import List
 from pydantic import BaseModel
-from app.services.supabase import get_supabase
+from backend.app.services.etl.supabase import get_supabase
 from app.core.auth import get_current_user
 
 router = APIRouter()

@@ -5,14 +5,13 @@
 #     Token,
 # )
 
-import json
 import logging
 from pydantic import BaseModel
 from datetime import datetime, timezone
 from typing import Optional, Dict, Any
 
-from app.services.vectorise_data import kb_item_to_chunks
-from app.services.supabase import get_supabase
+from backend.app.services.etl.vectorise_data import kb_item_to_chunks
+from backend.app.services.etl.supabase import get_supabase
 
 logger = logging.getLogger(__name__)
 

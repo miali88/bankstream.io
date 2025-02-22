@@ -1,6 +1,6 @@
 from typing import Dict
 import logging
-from app.services.supabase import get_supabase
+from backend.app.services.etl.supabase import get_supabase
 import csv
 from io import StringIO
 

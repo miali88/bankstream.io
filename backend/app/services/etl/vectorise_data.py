@@ -3,7 +3,7 @@ from tiktoken import encoding_for_model
 import requests
 import json
 import os
-from typing import List, Tuple, Literal
+from typing import List, Tuple, Literal, Union
 from dotenv import load_dotenv
 from enum import Enum
 load_dotenv()
@@ -11,7 +11,7 @@ load_dotenv()
 # import spacy
 from openai import AsyncOpenAI
 import voyageai
-from app.services.supabase import get_supabase
+from app.services.etl.supabase import get_supabase
 
 openai = AsyncOpenAI()
 
@@ -52,6 +52,17 @@ def count_tokens(text: str, model: str = "gpt-4o") -> int:
     return len(tokens)
 
 def sliding_window_chunking(text: str, max_window_size: int = 600, overlap: int = 200) -> List[str]:
+    """
+    Split text into overlapping chunks of specified token size.
+
+    Args:
+        text (str): The input text to be chunked
+        max_window_size (int, optional): Maximum number of tokens per chunk. Defaults to 600.
+        overlap (int, optional): Number of overlapping tokens between chunks. Defaults to 200.
+
+    Returns:
+        List[str]: List of text chunks with specified overlap
+    """
     encoder = encoding_for_model("gpt-4o")  # Use the same model as in count_tokens
     tokens = encoder.encode(text)
     chunks = []
@@ -65,29 +76,63 @@ def sliding_window_chunking(text: str, max_window_size: int = 600, overlap: int 
     return chunks
 
 async def insert_chunk(
-    parent_id: str, content: str, chunk_index: int, embedding: List[float], user_id: str, token_count: int, title: str
+    parent_id: str, 
+    content: str, 
+    chunk_index: int, 
+    embedding: List[float], 
+    user_id: str, 
+    token_count: int, 
+    title: str,
+    source_table: str
 ) -> None:
+    """
+    Insert or update a chunk's embeddings in the database.
+
+    Args:
+        parent_id (str): ID of the parent document
+        content (str): The chunk's text content
+        chunk_index (int): Index position of the chunk in the document
+        embedding (List[float]): Vector embedding of the chunk
+        user_id (str): ID of the user who owns the document
+        token_count (int): Number of tokens in the chunk
+        title (str): Title of the parent document
+        source_table (str): Name of the table containing the parent document
+
+    Raises:
+        Exception: If database operation fails
+    """
     logger.info(f"Inserting chunk {chunk_index} for document {parent_id}")
     try:
         supabase = await get_supabase()
 
-        # First, get the chunk id
+        # First, check if the chunk exists
         result = await supabase.table('chunks').select('id').eq('parent_id', parent_id).eq('chunk_index', chunk_index).eq('user_id', user_id).execute()
         
         if not result.data:
-            logger.error(f"No existing chunk found for parent_id: {parent_id}, chunk_index: {chunk_index}")
-            raise Exception("Chunk not found")
+            # Create new chunk if it doesn't exist
+            await supabase.table('chunks').insert({
+                'parent_id': parent_id,
+                'content': content,
+                'chunk_index': chunk_index,
+                'voyage_embeddings': embedding,
+                'user_id': user_id,
+                'token_count': token_count,
+                'title': title,
+                'source_table': source_table
+            }).execute()
+            logger.debug(f"Created new chunk {chunk_index}")
+        else:
+            # Update existing chunk
+            chunk_id = result.data[0]['id']
+            await supabase.table('chunks').update({
+                'voyage_embeddings': embedding,
+                'content': content,
+                'token_count': token_count
+            }).eq('id', chunk_id).execute()
+            logger.debug(f"Updated existing chunk {chunk_index}")
             
-        chunk_id = result.data[0]['id']
-        
-        # Update the voyage_embeddings for the specific chunk
-        await supabase.table('chunks').update({
-            'voyage_embeddings': embedding
-        }).eq('id', chunk_id).execute()
-        
-        logger.debug(f"Successfully updated voyage embeddings for chunk {chunk_index}")
     except Exception as e:
-        logger.error(f"Failed to update chunk {chunk_index}: {str(e)}")
+        logger.error(f"Failed to insert/update chunk {chunk_index}: {str(e)}")
         raise
 
 async def get_embedding(
@@ -147,7 +192,22 @@ async def get_voyage_embedding(text: str, input_type: Literal["document", "query
         raise
 
 
-async def process_item(item_id: str, content: str, user_id: str, title: str) -> int:
+async def process_item(item_id: str, content: str, user_id: str, title: str, source_table: str) -> int:
+    """
+    Process a text document by chunking it and generating embeddings.
+
+    Args:
+        item_id (str): Unique identifier for the document
+        content (str): Full text content of the document
+        user_id (str): ID of the user who owns the document
+        title (str): Title of the document
+
+    Returns:
+        int: Total number of tokens processed
+
+    Raises:
+        Exception: If chunk processing fails
+    """
     logger.info(f"Processing item {item_id} for user {user_id}")
     chunks = sliding_window_chunking(content)
     logger.info(f"Created {len(chunks)} chunks for processing")
@@ -166,7 +226,8 @@ async def process_item(item_id: str, content: str, user_id: str, title: str) -> 
                 embedding,
                 user_id,
                 token_count,
-                title
+                title,
+                source_table
             )
             total_tokens += token_count
         except Exception as e:
@@ -174,8 +235,22 @@ async def process_item(item_id: str, content: str, user_id: str, title: str) -> 
             raise
     return total_tokens
 
-async def process_tabular_item(item_id: str, rows: List[dict], user_id: str, title: str) -> int:
-    """Process tabular data rows and store them as chunks with embeddings"""
+async def process_tabular_item(item_id: str, rows: List[dict], user_id: str, title: str, source_table: str) -> int:
+    """
+    Process tabular data by treating each row as a chunk and generating embeddings.
+
+    Args:
+        item_id (str): Unique identifier for the tabular document
+        rows (List[dict]): List of dictionaries representing table rows
+        user_id (str): ID of the user who owns the document
+        title (str): Title of the document
+
+    Returns:
+        int: Total number of tokens processed
+
+    Raises:
+        Exception: If row processing fails
+    """
     logger.info(f"Processing tabular item {item_id} with {len(rows)} rows")
     total_tokens = 0
     
@@ -196,7 +271,8 @@ async def process_tabular_item(item_id: str, rows: List[dict], user_id: str, tit
                 embedding,
                 user_id,
                 token_count,
-                title
+                title,
+                source_table
             )
             total_tokens += token_count
             
@@ -208,8 +284,28 @@ async def process_tabular_item(item_id: str, rows: List[dict], user_id: str, tit
 
 
 """ ENTRY POINT """
-async def kb_item_to_chunks(data_id: str, data_content: str, user_id: str, title: str, is_tabular: bool = False) -> None:
-    """Modified to handle both text and tabular data"""
+async def kb_item_to_chunks(
+    data_id: str, 
+    data_content: Union[str, List[dict]], 
+    user_id: str, 
+    title: str, 
+    source_table: str,
+    is_tabular: bool = False,
+) -> None:
+    """
+    Process a knowledge base item by chunking it and generating embeddings.
+    Handles both text documents and tabular data.
+
+    Args:
+        data_id (str): Unique identifier for the document
+        data_content (Union[str, List[dict]]): Either full text content or list of table rows
+        user_id (str): ID of the user who owns the document
+        title (str): Title of the document
+        is_tabular (bool, optional): Whether the content is tabular data. Defaults to False.
+
+    Raises:
+        Exception: If processing fails
+    """
     logger.info(f"Starting knowledge base item processing for ID {data_id}")
     
     try:
@@ -219,7 +315,8 @@ async def kb_item_to_chunks(data_id: str, data_content: str, user_id: str, title
                 item_id=data_id,
                 rows=data_content,
                 user_id=user_id,
-                title=title
+                title=title,
+                source_table=source_table
             )
         else:
             """ removed text processing logic """
@@ -235,7 +332,8 @@ async def kb_item_to_chunks(data_id: str, data_content: str, user_id: str, title
                 item_id=data_id,
                 content=data_content,
                 user_id=user_id,
-                title=title
+                title=title,
+                source_table=source_table
             )
             
         logger.info(f"Successfully processed knowledge base item {title}")

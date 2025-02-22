@@ -14,7 +14,7 @@ from pydantic import BaseModel
 import pandas as pd
 
 
-from app.services.supabase import get_supabase
+from backend.app.services.etl.supabase import get_supabase
 
 # Configure logging
 logging.basicConfig(

@@ -40,3 +40,12 @@ build/
 frontend/.next
 
 bank_data_23-25/
+invoices/
+*.pdf*
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.bmp
+*.tiff
+*.ico

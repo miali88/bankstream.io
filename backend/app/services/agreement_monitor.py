@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime, timedelta
-from app.services.supabase import get_supabase
+from backend.app.services.etl.supabase import get_supabase
 
 logger = logging.getLogger(__name__)
 

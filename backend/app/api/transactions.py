@@ -6,7 +6,7 @@ from typing import List, Optional
 import logging
 from fastapi.responses import StreamingResponse
 
-from app.services.supabase import get_supabase
+from backend.app.services.etl.supabase import get_supabase
 from app.core.auth import get_current_user
 from app.schemas.transactions import GetTransactions
 from app.services.transactions import TransactionService

@@ -7,8 +7,8 @@
 
 from typing import List, Dict, Any
 import voyageai
-from app.services.vectorise_data import get_voyage_embedding
-from app.services.supabase import get_supabase
+from backend.app.services.etl.vectorise_data import get_voyage_embedding
+from backend.app.services.etl.supabase import get_supabase
 
 async def prepare_account_text(account: Dict[str, Any]) -> str:
     """Prepare account text for embedding by combining relevant fields"""

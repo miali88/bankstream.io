@@ -3,7 +3,7 @@ import requests, os, logging
 from dotenv import load_dotenv
 from fastapi import HTTPException
 
-from app.services.supabase import get_supabase
+from backend.app.services.etl.supabase import get_supabase
 
 load_dotenv()
 
