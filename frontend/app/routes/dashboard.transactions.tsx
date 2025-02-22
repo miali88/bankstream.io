@@ -27,7 +27,7 @@ import type {
 import { config } from "~/config.server";
 import { getTransactions, startEnrichment } from "~/api/transactions";
 import { buildUrl } from "~/api/config";
-import type { ActionData } from "@remix-run/node";
+import type { ActionFunctionArgs } from "@remix-run/node";
 
 const API_BASE_URL = config.apiBaseUrl;
 
@@ -132,7 +132,7 @@ interface EnrichActionData {
   data?: any;
 }
 
-export const action: ActionFunction = async (args): Promise<Response> => {
+export const action: ActionFunction = async (args: ActionFunctionArgs): Promise<Response> => {
   const { userId, getToken } = await getAuth(args);
 
   if (!userId) {
@@ -234,6 +234,11 @@ export const action: ActionFunction = async (args): Promise<Response> => {
   }
 };
 
+interface CsvFetcherData {
+  csvData: string;
+  contentType: string;
+}
+
 export default function Transactions() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { toast } = useToast();
@@ -246,7 +251,7 @@ export default function Transactions() {
   const submit = useSubmit();
   const navigation = useNavigation();
   const actionData = useActionData<EnrichActionData>();
-  const csvFetcher = useFetcher();
+  const csvFetcher = useFetcher<CsvFetcherData>();
   const loaderData = useLoaderData<typeof loader>();
 
   console.log("Loader Data:", loaderData);
@@ -334,10 +339,6 @@ export default function Transactions() {
 
     submit(formData, { method: "patch" });
 
-    // Add response logging
-    console.log("Submit state:", submit.state);
-    console.log("Submit data:", submit.data);
-
     // Clear pending changes after submission
     setPendingChanges({});
 
@@ -385,7 +386,7 @@ export default function Transactions() {
     if (csvFetcher.data && csvFetcher.state === "idle") {
       const date = new Date().toISOString().split("T")[0];
       const blob = new Blob([csvFetcher.data.csvData], {
-        type: csvFetcher.data.contentType,
+        type: csvFetcher.data.contentType || 'text/csv'
       });
       const dataUrl = URL.createObjectURL(blob);
       const anchor = document.createElement("a");

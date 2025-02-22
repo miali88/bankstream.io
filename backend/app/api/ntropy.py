@@ -13,7 +13,7 @@ from app.services.reconciliation import reconcile_transactions
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
-ntropy_service = NtropyService(os.getenv("NTROPY_API_KEY"))
+ntropy_service = NtropyService()
 
 def get_mock_batch_response() -> BatchCreateResponse:
     """Generate a mock batch response for testing"""

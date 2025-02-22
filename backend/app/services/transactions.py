@@ -43,10 +43,10 @@ class TransactionService:
         offset = (page - 1) * page_size
         logger.debug(f"Calculated offset={offset} for pagination")
 
-        # Get transactions with count
+        # Get transactions with count and proper join on ntropy_id
         logger.debug("Executing Supabase query to fetch transactions")
         result = await (supabase.table('gocardless_transactions')
-            .select('*, ntropy_transactions(enriched_data)', count='exact')
+            .select('*, ntropy_transactions!inner(enriched_data)', count='exact')
             .eq('user_id', user_id)
             .order('created_at', desc=True)
             .range(offset, offset + page_size - 1)
@@ -64,11 +64,15 @@ class TransactionService:
                 logger.debug(f"Found enriched data for transaction {tx.get('id')}")
                 enriched_data = ntropy_data[0].get('enriched_data', {})
                 tx['entities'] = enriched_data.get('entities', {})
-                tx['categories'] = enriched_data.get('categories', {})
+                # Transform category from dict to string using the 'general' category
+                categories = enriched_data.get('categories', {})
+                tx['categories'] = categories  # Keep the full category data
+                tx['category'] = categories.get('general') if isinstance(categories, dict) else None
             else:
                 logger.debug(f"No enriched data found for transaction {tx.get('id')}")
                 tx['entities'] = None
                 tx['categories'] = None
+                tx['category'] = None
             transactions.append(tx)
 
         logger.info(f"Returning {len(transactions)} processed transactions")
@@ -77,7 +81,7 @@ class TransactionService:
             "total_count": total_count,
             "page": page,
             "page_size": page_size,
-            "total_pages": -(-total_count // page_size)
+            "total_pages": -(-total_count // page_size)  # Ceiling division
         }
 
     async def export_transactions_to_csv(self, user_id: str) -> str:

@@ -12,21 +12,28 @@ from app.schemas.gocardless import BuildLinkResponse, Bank
 from app.services import gocardless
 from app.services import agreement_monitor
 from app.core.auth import get_current_user
-from app.core.logger import logger
 
 load_dotenv()
+
+# Configure logger
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+# Create console handler with formatting
+console_handler = logging.StreamHandler()
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+console_handler.setFormatter(formatter)
+logger.addHandler(console_handler)
 
 router = APIRouter()
 
 # Store active SSE connections by ref instead of user_id
 active_sse_connections: Dict[str, asyncio.Queue] = {}
 
-logger = logging.getLogger(__name__)
-
 """ step 1, user selects country and selects their bank from the list of banks """
 @router.get("/bank_list", response_model=List[Bank])
 async def get_list_of_banks(country: str, user_id: str = Depends(get_current_user)):
-    print(f"\n /list-of-banks called by user {user_id}")
+    logger.info(f"Fetching bank list for country: {country}, user_id: {user_id}")
     return await gocardless.fetch_list_of_banks(country)
 
 
@@ -34,50 +41,49 @@ async def get_list_of_banks(country: str, user_id: str = Depends(get_current_use
 @router.get("/build_link", response_model=BuildLinkResponse)
 async def build_bank_link(institution_id: str, transaction_total_days: str,
                           user_id: str = Depends(get_current_user), medium: str = "online"):
-    print(f"\n /build_link called by user {user_id}")
+    logger.info(f"Building bank link for institution: {institution_id}, user: {user_id}")
     try:
         link, ref = await gocardless.build_link(institution_id, transaction_total_days, user_id, medium)
+        logger.debug(f"Successfully built link with ref: {ref}")
         return {"link": link, "ref": ref}
     except Exception as e:
+        logger.error(f"Failed to build bank link: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/sse")
 async def sse_endpoint(request: Request, ref: str = Query(...)):
     try:
-        print(f"SSE connection attempt for ref: {ref}")
+        logger.info(f"New SSE connection attempt for ref: {ref}")
         
-        # Create a queue for this ref
         queue = asyncio.Queue()
         active_sse_connections[ref] = queue
-        print(f"Created SSE queue for ref: {ref}")
+        logger.debug(f"Created SSE queue for ref: {ref}")
 
         async def event_generator():
             try:
-                print(f"Starting event generator for ref: {ref}")
+                logger.debug(f"Starting event generator for ref: {ref}")
                 while True:
                     if await request.is_disconnected():
-                        print(f"SSE connection disconnected for ref: {ref}")
+                        logger.info(f"SSE connection disconnected for ref: {ref}")
                         break
 
                     try:
-                        # Wait for messages with a timeout
                         message = await asyncio.wait_for(queue.get(), timeout=30)
-                        print(f"Sending SSE message for ref {ref}: {message}")
+                        logger.debug(f"Sending SSE message for ref {ref}: {message}")
                         yield message
                     except asyncio.TimeoutError:
-                        # Send keepalive comment
-                        print(f"Sending keepalive for ref: {ref}")
+                        logger.debug(f"Sending keepalive for ref: {ref}")
                         yield ": keepalive\n\n"
             except Exception as e:
-                print(f"SSE Error for ref {ref}: {str(e)}")
+                logger.error(f"SSE Error for ref {ref}: {str(e)}", exc_info=True)
             finally:
-                print(f"Cleaning up SSE connection for ref: {ref}")
+                logger.info(f"Cleaning up SSE connection for ref: {ref}")
                 active_sse_connections.pop(ref, None)
 
         return EventSourceResponse(event_generator())
     except Exception as e:
-        print(f"SSE connection failed: {str(e)}")
+        logger.error(f"SSE connection failed: {str(e)}", exc_info=True)
         raise HTTPException(status_code=400, detail="Bad Request")
 
 

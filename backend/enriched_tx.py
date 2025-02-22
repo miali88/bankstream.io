@@ -81,11 +81,12 @@ class EnrichedTxTable(BaseModel):
 """
 # TODO: complete flow:
 
-# invoice attachments - TODO: I've extracted and saved to supabase (enriched_tx.py). Need to do retrieval (consider entity simi search, + amount and date range)
 # entity from ntropy - done
-# previous user assigned coa - TODO:
+# web search - done (brave_search.py)
 # LLM enrich - done (llm_categorise.py)
-# simi search for coa - final step (simi_search_coa.py)
+# invoice attachments - TODO: assign invoices to tx (simi_search_invoices.py). Cnsider entity simi search + amount and date range. Data extraction is (enriched_tx.py)
+# previous user assigned coa - TODO:
+# simi search for coa - done (simi_search_coa.py)
 """
 
 
