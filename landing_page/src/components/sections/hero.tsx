@@ -2,7 +2,6 @@
 
 import { motion } from "framer-motion";
 
-import { Icons } from "@/components/icons";
 import HeroVideoDialog from "@/components/magicui/hero-video";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";

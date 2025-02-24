@@ -100,14 +100,14 @@ async def health_check():
 async def nylas_auth(
     request: Request,
     nylas_client=Depends(get_nylas_client),
-    user_id: str = Depends(get_current_user)
+    # user_id: str = Depends(get_current_user)
 ):
     """
     Initiates the Nylas OAuth2 flow by redirecting to Nylas login
     """
     try:
         # Store the user_id in session for the callback
-        request.session["clerk_user_id"] = user_id
+        # request.session["clerk_user_id"] = user_id
         
         auth_url = nylas_client.auth.url_for_oauth2({
             "client_id": nylas_config["client_id"],
