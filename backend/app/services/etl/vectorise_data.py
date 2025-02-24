@@ -11,7 +11,7 @@ load_dotenv()
 # import spacy
 from openai import AsyncOpenAI
 import voyageai
-from app.services.etl.supabase import get_supabase
+from app.core.supabase_client import get_supabase
 
 openai = AsyncOpenAI()
 

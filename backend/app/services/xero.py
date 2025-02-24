@@ -10,8 +10,8 @@ from pydantic import BaseModel
 from datetime import datetime, timezone
 from typing import Optional, Dict, Any
 
-from backend.app.services.etl.vectorise_data import kb_item_to_chunks
-from backend.app.services.etl.supabase import get_supabase
+from app.services.etl.vectorise_data import kb_item_to_chunks
+from app.core.supabase_client import get_supabase
 
 logger = logging.getLogger(__name__)
 

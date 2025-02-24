@@ -1,14 +1,9 @@
 
 """ NON TESTED AI GENERATED CODE"""
 
-
-
-
-
 from typing import List, Dict, Any
-import voyageai
-from backend.app.services.etl.vectorise_data import get_voyage_embedding
-from backend.app.services.etl.supabase import get_supabase
+from app.services.etl.vectorise_data import get_voyage_embedding
+from app.core.supabase_client import get_supabase
 
 async def prepare_account_text(account: Dict[str, Any]) -> str:
     """Prepare account text for embedding by combining relevant fields"""

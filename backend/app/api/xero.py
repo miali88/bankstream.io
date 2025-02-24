@@ -17,7 +17,7 @@ from xero_python.api_client.oauth2 import OAuth2Token
 from dotenv import load_dotenv
 
 from app.services.xero import store_xero_credentials, get_xero_credentials, delete_xero_credentials
-from backend.app.services.etl.supabase import get_supabase
+from app.core.supabase_client import get_supabase
 from app.core.auth import get_current_user, validate_token
 
 # Load and validate environment variables

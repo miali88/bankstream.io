@@ -2,7 +2,7 @@ from typing import List, Dict, Any
 import asyncio
 
 from app.services.etl.vectorise_data import get_embedding, get_voyage_embedding
-from app.services.etl.supabase import get_supabase
+from backend.app.core.supabase_client import get_supabase
 
 async def init_supabase():
     return await get_supabase()

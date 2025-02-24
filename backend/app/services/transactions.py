@@ -3,7 +3,7 @@ import logging
 import csv
 from io import StringIO
 
-from app.services.etl.supabase import get_supabase
+from app.core.supabase_client import get_supabase
 from app.schemas.transactions import Insights
 logger = logging.getLogger(__name__)
 
@@ -165,7 +165,6 @@ class TransactionService:
         output.seek(0)
         logger.info("CSV export completed successfully")
         return output.getvalue() 
-    
     
     async def get_insights(self, user_id: str) -> Insights:
         """

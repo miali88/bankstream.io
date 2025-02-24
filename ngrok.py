@@ -13,7 +13,7 @@ logging.info('Starting ngrok tunnel setup')
 try:
 
     """ static domain - Frontend (Vite)"""
-    port = 5190
+    port = 8001
     http_tunnel_static = ngrok.connect(addr=f"http://localhost:{port}", subdomain="internally-wise-spaniel")
     logging.info(f"Frontend (Vite) running on:\n"
                 f"  - Local: http://localhost:{port}\n"

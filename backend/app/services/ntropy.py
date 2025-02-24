@@ -5,7 +5,7 @@ from datetime import datetime
 import json
 
 from ntropy_sdk import SDK
-from app.services.etl.supabase import get_supabase
+from app.core.supabase_client import get_supabase
 
 from app.schemas.transactions import TransactionsTable
 from app.schemas.ntropy import EnrichedTransactionRequest

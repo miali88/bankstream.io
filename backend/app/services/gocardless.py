@@ -6,9 +6,8 @@ import logging
 import uuid  # Add UUID import
 from datetime import datetime, timedelta
 
-from app.services.etl.supabase import get_supabase
+from app.core.supabase_client import get_supabase
 
-import json
 load_dotenv()
 
 # Set up logging
