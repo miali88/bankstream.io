@@ -145,27 +145,29 @@ def delete_webhook(webhook_id):
 
 def test_with_mock_payload():
     """Test with a mock webhook payload"""
-    nylas = Client(
-        api_key=os.environ.get('NYLAS_API_KEY'),
-        api_uri=os.environ.get('NYLAS_API_URI')
-    )
+    # Create our own mock payload for message.created
+    mock_payload = {
+        "type": "message.created",
+        "grant_id": "test_grant_id",
+        "message_id": "test_message_id",
+        "thread_id": "test_thread_id",
+        "object": {
+            "id": "test_message_id",
+            "subject": "Test Email with AI Assistant",
+            "body": "This is a test email. Hey AI, can you help me with something?",
+            "from": [{"name": "Test User", "email": "test@example.com"}],
+            "to": [{"name": "AI Assistant", "email": "ai@example.com"}],
+            "date": 1645556400,
+            "unread": True
+        },
+        "date": 1645556400
+    }
     
-    try:
-        # Get a mock webhook payload for message.created
-        mock_payload = nylas.webhooks.get_mock_payload(WebhookTriggers.MESSAGE_CREATED)
-        
-        logger.info("Mock webhook payload for MESSAGE_CREATED:")
-        logger.info(json.dumps(mock_payload, indent=2))
-        
-        # You can use this payload to test your webhook handler
-        return mock_payload
-        
-    except Exception as e:
-        logger.error(f"Error getting mock payload: {str(e)}")
-        # Print more detailed error information
-        import traceback
-        logger.error(traceback.format_exc())
-        sys.exit(1)
+    logger.info("Mock webhook payload for MESSAGE_CREATED:")
+    logger.info(json.dumps(mock_payload, indent=2))
+    
+    # You can use this payload to test your webhook handler
+    return mock_payload
 
 if __name__ == "__main__":
     import argparse
