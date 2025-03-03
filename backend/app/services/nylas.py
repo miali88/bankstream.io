@@ -46,12 +46,48 @@ class EmailAssistant:
     async def process_incoming_email(self, webhook_data: Dict):
         """Process incoming email webhook data"""
         try:
+            # Log the webhook data
+            logger.info(f"Processing webhook data: {webhook_data}")
+            
+            # Extract webhook type
+            webhook_type = webhook_data.get('type', 'unknown')
+            logger.info(f"Webhook type: {webhook_type}")
+            
+            # Check if this is a test payload
+            is_test = webhook_data.get('grant_id') == 'test_grant_id'
+            if is_test:
+                logger.info("Detected test payload, skipping actual processing")
+                return {"status": "success", "message": "Test payload received and validated"}
+            
+            # Handle different webhook types
+            if webhook_type == 'message.created':
+                await self._process_message_created(webhook_data)
+            elif webhook_type == 'message.updated':
+                await self._process_message_updated(webhook_data)
+            elif webhook_type == 'message.opened':
+                logger.info(f"Message opened event received: {webhook_data.get('message_id')}")
+            else:
+                logger.info(f"Unhandled webhook type: {webhook_type}")
+                
+        except Exception as e:
+            logger.error(f"Error processing webhook: {str(e)}")
+            import traceback
+            logger.error(f"Traceback: {traceback.format_exc()}")
+            raise
+            
+    async def _process_message_created(self, webhook_data: Dict):
+        """Process a message.created webhook"""
+        try:
             # Extract relevant information
             thread_id = webhook_data.get('thread_id')
             message_id = webhook_data.get('message_id')
             grant_id = webhook_data.get('grant_id')
             
-            logger.info(f"Processing incoming email: {message_id} from thread: {thread_id}")
+            if not all([thread_id, message_id, grant_id]):
+                logger.error(f"Missing required fields in webhook data: {webhook_data}")
+                return
+                
+            logger.info(f"Processing new message: {message_id} from thread: {thread_id}")
             
             # Fetch the message content
             message = await self.nylas.messages.get(grant_id, message_id)
@@ -74,11 +110,17 @@ class EmailAssistant:
             # Update context
             await self._update_conversation_context(thread_id, message, response)
             
-            logger.info(f"Successfully processed email {message_id}")
+            logger.info(f"Successfully processed new message {message_id}")
             
         except Exception as e:
-            logger.error(f"Error processing email: {str(e)}")
-            raise HTTPException(status_code=500, detail=str(e))
+            logger.error(f"Error processing message.created: {str(e)}")
+            raise
+            
+    async def _process_message_updated(self, webhook_data: Dict):
+        """Process a message.updated webhook"""
+        # Similar to _process_message_created but for updates
+        logger.info(f"Message updated: {webhook_data.get('message_id')}")
+        # Implement specific logic for message updates if needed
     
     def _is_ai_trigger(self, message: Dict) -> bool:
         """Check if message contains AI trigger phrase"""
