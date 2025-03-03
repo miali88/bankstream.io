@@ -1,9 +1,9 @@
-# Bankstream.io
+# 🏦 Bankstream.io
 
-## Overview
+## 📋 Overview
 Bankstream.io is a modern financial data processing and analysis platform that helps businesses streamline their banking operations. The platform integrates with various financial services, processes transactions, and provides intelligent insights through machine learning capabilities.
 
-## Features
+## ⭐ Features
 - 🏦 Banking integration with multiple providers
 - 💳 Transaction processing and enrichment
 - 📊 Advanced analytics and reporting
@@ -11,23 +11,23 @@ Bankstream.io is a modern financial data processing and analysis platform that h
 - 📈 Real-time data visualization
 - 🔐 Secure authentication with Clerk
 
-## Application Screenshots
+## 🖼️ Application Screenshots
 
-### Bank Connection
+### 🔗 Bank Connection
 ![Add Bank Interface](app_ui/add_bank.png)
 *Easily connect your bank accounts through our secure integration interface*
 
-### Transaction Management
+### 💰 Transaction Management
 ![Transactions Interface](app_ui/transactions.png)
 *View, categorize, and manage all your transactions in one place*
 
-### Analytics Dashboard
+### 📊 Analytics Dashboard
 ![Analysis Dashboard](app_ui/analysis.png)
 *Get powerful insights with our interactive analytics dashboard*
 
-## Tech Stack
+## 🛠️ Tech Stack
 
-### Frontend
+### 🌐 Frontend
 - **Framework**: [Remix.js](https://remix.run/) with TypeScript
 - **UI Components**: 
   - Tailwind CSS for styling
@@ -36,7 +36,7 @@ Bankstream.io is a modern financial data processing and analysis platform that h
 - **State Management**: React hooks and context
 - **Authentication**: Clerk
 
-### Backend
+### ⚙️ Backend
 - **Language**: Python 3.10+
 - **API Framework**: FastAPI
 - **Database**: Supabase
@@ -47,14 +47,13 @@ Bankstream.io is a modern financial data processing and analysis platform that h
   - Brave search API (to contextualise entity names)
   - OpenAI (for inference to make chart of account matching decision)
 
-
-## Prerequisites
+## 📋 Prerequisites
 - Node.js >= 20.0.0
 - Python >= 3.10
 
-## Getting Started
+## 🚀 Getting Started
 
-### Frontend Setup
+### 🎨 Frontend Setup
 1. Navigate to the frontend directory:
 ```bash
 cd frontend
@@ -75,7 +74,7 @@ cp .env.example .env
 npm run dev
 ```
 
-### Backend Setup
+### 💻 Backend Setup
 1. Navigate to the backend directory:
 ```bash
 cd backend
@@ -102,15 +101,14 @@ cp .env.example .env
 uvicorn app.main:app --reload
 ```
 
-## Development
+## 👨‍💻 Development
 
-### Code Style
+### 📝 Code Style
 - Frontend follows ESLint configuration
 - Backend follows PEP 8 guidelines
 - Use TypeScript for type safety in frontend code
 
-
-## Deployment
+## 🚀 Deployment
 The application can be deployed using your preferred hosting solution. Make sure to:
 1. Set up all required environment variables
 2. Configure your database connection
