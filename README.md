@@ -1,7 +1,9 @@
 # 🏦 Bankstream.io
 
 ## 📋 Overview
-Bankstream.io is a modern financial data processing and analysis platform that helps businesses streamline their banking operations. The platform integrates with various financial services, processes transactions, and provides intelligent insights through machine learning capabilities.
+Bankstream.io is a modern financial data processing and analysis platform that helps businesses get quick insights into their operations. 
+
+The platform integrates with various over 2,500 banks in over 30 countries, uses a multi-step process to enrich and categorise and provides intelligent insights.
 
 ## ⭐ Features
 - 🏦 Banking integration with multiple providers
@@ -19,7 +21,7 @@ Bankstream.io is a modern financial data processing and analysis platform that h
 
 ### 💰 Transaction Management
 ![Transactions Interface](app_ui/transactions.png)
-*View, categorize, and manage all your transactions in one place*
+*View, AI categorize, and manage all your transactions in one place*
 
 ### 📊 Analytics Dashboard
 ![Analysis Dashboard](app_ui/analysis.png)
