@@ -5,6 +5,8 @@ Bankstream.io is a modern financial data processing and analysis platform that h
 
 The platform integrates with various over 2,500 banks in over 30 countries, uses a multi-step process to enrich and categorise and provides intelligent insights.
 
+For deployment help please reach out to michael@flowon.ai
+
 ## ⭐ Features
 - 🏦 Banking integration with multiple providers
 - 💳 Transaction processing and enrichment
